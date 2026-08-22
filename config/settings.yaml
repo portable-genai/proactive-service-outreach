@@ -1,0 +1,254 @@
+# Proactive Service Outreach (E5) runtime configuration.
+#
+# Loaded by `src/proactive_outreach/config.py`. Point at a different file with
+# OUTREACH_SETTINGS; a path that is named but missing is a boot error, not
+# a silent fall-back to built-in defaults.
+#
+# `${VAR}` and `${VAR:-default}` resolve in THREE states: unset takes the default written here,
+# SET-AND-EMPTY resolves to empty (an operator who emptied a value expressed an intent, and it
+# names nothing), and a set value wins. This file holds env var NAMES and non-secret defaults
+# only: no secret value is ever committed here.
+
+# Data residency. Selected once and shared by the runtime and Terraform.
+region: ${GCP_REGION:-asia-southeast1}
+
+# Tenant partition asserted on outbound reviews when the verified principal carries none.
+# (Built as one template expression: a literal "${" immediately before a template opener is
+# ambiguous to render, so the whole reference is produced by the expression instead.)
+tenant: ${OUTREACH_TENANT:-}
+
+# Local profile stores. ":memory:" is the ephemeral, deterministic default the gate uses; a
+# deployment points this at a durable path.
+audit_path: ${OUTREACH_AUDIT_PATH:-:memory:}
+
+# The external head anchor for the WORM audit chain (practices check C9). The hash chain cannot
+# detect a TRUNCATED TAIL by itself: dropping the newest rows leaves a shorter chain that
+# verifies perfectly. Point this at a file on a DIFFERENT volume, under different credentials,
+# from audit_path, and every append also writes the chain head there. Empty (the default) means
+# no anchor, which is correct for the ephemeral ":memory:" store and wrong for a durable one.
+audit_anchor_path: ${OUTREACH_AUDIT_ANCHOR:-}
+
+# The audience the managed (gcp) IAP identity adapter verifies the assertion AGAINST: the
+# IAP-protected resource, "/projects/<NUM>/global/backendServices/<ID>" behind an HTTPS load
+# balancer. It is per-deployment, so it is configuration and never a literal in the adapter.
+# Three states, and UNSET and SET-AND-EMPTY land in the same place on purpose: both resolve to
+# empty, and an empty audience REFUSES every caller rather than verifying without one.
+# google-auth documents audience=None as "the audience is not verified", which accepts ANY
+# Google-signed OIDC token, from any project or any app, and reads its email as a principal.
+iap_audience: ${OUTREACH_IAP_AUDIENCE:-}
+
+# Rule R8: where an escalated result is routed for human review. The managed profile REFUSES to
+# swallow an escalation when this is empty, so a producer cannot ship with R8 unwired.
+# The outbound S2S credentials are HRZ7_S2S_TOKEN / HRZ7_S2S_SIGNING_KEY (see .env.secrets.example),
+# deliberately distinct from this service's own inbound OUTREACH_S2S_TOKEN.
+review_url: ${HRZ_HUMAN_REVIEW_URL:-}
+
+# The consent and preference store this service ASKS (Mkt6). There is deliberately no local
+# fallback: an unset value refuses under the managed profile rather than answering a legal
+# question about a person from a cache nobody governs. Credentials are CONSENT_S2S_TOKEN /
+# CONSENT_S2S_SIGNING_KEY (see .env.secrets.example), read by consent-preference-kit itself.
+consent_url: ${MKT_CONSENT_STORE_URL:-}
+
+# Where the OFFLINE detection adapter reads synthetic events from. Empty means the shipped
+# fixture set in adapters/local/fixtures.py; a path that is named but missing is an error.
+event_fixture_path: ${OUTREACH_EVENT_FIXTURES:-}
+
+# Where the MANAGED detection adapter reads events from: a client-owned warehouse view. The
+# view is the contract, so this service never learns how a ledger records a decline.
+event_view: ${OUTREACH_EVENT_VIEW:-}
+
+# The managed model that drafts notification bodies. Empty means no drafter is reachable, which
+# the service treats as a discarded draft: deterministic body, human review, nothing delivered.
+drafting_model: ${OUTREACH_DRAFTING_MODEL:-}
+
+# The managed conversation channel a chat notification is delivered on.
+chat_agent: ${OUTREACH_CHAT_AGENT:-}
+
+# The managed voice, and the in-region location synthesised audio is written to. The domain
+# never holds audio bytes; residency is a property of the bucket an operator provisioned.
+speech_voice: ${OUTREACH_SPEECH_VOICE:-}
+speech_output_uri: ${OUTREACH_SPEECH_OUTPUT_URI:-}
+
+# --------------------------------------------------------------------------------------- #
+# THE BANK'S POLICY. Every number a decision turns on lives here, not in a module constant.
+# The values below are a SYNTHETIC reference set: replace all of them with the client's own.
+#
+# A section that is ABSENT inherits the shipped default, so a deployment overrides only what it
+# means to change. A section that is PRESENT is used exactly as written, EMPTY INCLUDED: an
+# operator who wrote an empty caps block said something, and it was not "use the vendor's
+# numbers". An unconfigured cap or an unconfigured market then DENIES, because an unconfigured
+# requirement is a gap and never a pass. See src/proactive_outreach/domain/policy.py.
+# --------------------------------------------------------------------------------------- #
+policy:
+  # Which operational events become an outreach, on what channel, and how long they stay news.
+  # An event missing a required attribute does NOT fire: the alternative is a drafter inventing
+  # the fact the customer is about to be told.
+  triggers:
+    failed_payment:
+      template_id: failed_payment_retry
+      purpose: service
+      channel: chat
+      resolution_path: update-payment-method
+      severity: medium
+      max_age_hours: 48
+      required_attributes: [card_suffix, retry_on]
+    delivery_exception:
+      template_id: delivery_exception_reschedule
+      purpose: service
+      channel: chat
+      resolution_path: reschedule-delivery
+      severity: low
+      max_age_hours: 72
+      required_attributes: [tracking_ref, next_attempt_on]
+    expiring_card:
+      template_id: expiring_card_renew
+      purpose: service
+      channel: chat
+      resolution_path: renew-card
+      severity: low
+      max_age_hours: 720
+      required_attributes: [card_suffix, expires_on]
+    # Consequential: a fraud hold is never delivered automatically. It is drafted, held and
+    # routed to the Hrz7 console, and a human approves the words before the customer hears them.
+    fraud_hold:
+      template_id: fraud_hold_verify
+      purpose: service
+      channel: voice
+      resolution_path: verify-in-app
+      severity: critical
+      max_age_hours: 6
+      required_attributes: [hold_ref, card_suffix]
+      consequential: true
+    # Consequential: an outage notice goes to many people at once and is quoted back at the
+    # bank, so the same rule applies.
+    outage:
+      template_id: outage_status
+      purpose: service
+      channel: chat
+      resolution_path: check-status-page
+      severity: high
+      max_age_hours: 12
+      required_attributes: [outage_ref, affected_service]
+      consequential: true
+
+  # How often one subject may be contacted, per purpose and channel. The engine takes the
+  # SMALLER of this limit and any limit the consent store reports, so neither authority can be
+  # widened by the other's silence. A purpose and channel with no row here DENIES.
+  frequency_caps:
+    service:chat:
+      limit: 3
+      window_hours: 24
+    service:voice:
+      limit: 1
+      window_hours: 24
+
+  # Market-local quiet hours, with the UTC offset stated EXPLICITLY. A decision that depended on
+  # which tzdata release the host shipped would not replay, and replay is the whole point. A
+  # market with no row here DENIES rather than defaulting to "any time is fine".
+  quiet_hours:
+    SG:
+      start_hour: 22
+      end_hour: 8
+      utc_offset_minutes: 480
+    AU:
+      start_hour: 21
+      end_hour: 8
+      utc_offset_minutes: 600
+    JP:
+      start_hour: 21
+      end_hour: 9
+      utc_offset_minutes: 540
+
+  # The deterministic message bodies. A model may REPHRASE one of these; it may never introduce
+  # a figure, and the validator discards a draft that does. A template with no configured
+  # wording is a gap for the policy owner, not something for the code to improvise.
+  templates:
+    failed_payment_retry: >-
+      A payment on the card ending {card_suffix} did not go through. We will try again on
+      {retry_on}. You can update the card in the app.
+    delivery_exception_reschedule: >-
+      Delivery {tracking_ref} could not be completed. The next attempt is {next_attempt_on},
+      and you can reschedule in the app.
+    expiring_card_renew: >-
+      The card ending {card_suffix} expires on {expires_on}. Renewing it in the app keeps your
+      scheduled payments running.
+    fraud_hold_verify: >-
+      A hold was placed on the card ending {card_suffix} (reference {hold_ref}). Please verify
+      the recent activity in the app.
+    outage_status: >-
+      {affected_service} is currently disrupted (reference {outage_ref}). The status page
+      carries the latest update.
+
+  # Subjects who receive nothing at all, whatever the consent store says. Synthetic ids only.
+  suppressed_subjects:
+    - subj-000900
+
+  # Phrases a service notification must never contain. The last three are the classic
+  # credential-phishing sentences: a bank that sends one has trained its customers to fall for
+  # the next one.
+  banned_phrases:
+    - guaranteed
+    - refund approved
+    - compensation
+    - click here to confirm your password
+    - verify your card number
+
+  # The channel's limit. A truncated legal sentence is a different sentence.
+  max_body_chars: 320
+
+# The per-port adapter map: the ONLY place a binding lives, so switching the whole stack is a
+# configuration change rather than a code edit. Every port must bind every profile; the loader
+# refuses a partial block and `tests/test_settings_file.py` fails the build if this drifts from
+# `config.DEFAULT_BINDINGS`.
+project_id: ${GOOGLE_CLOUD_PROJECT:-}
+
+adapters:
+  audit:
+    local: proactive_outreach.adapters.local.audit:LocalAuditAdapter
+    gcp: proactive_outreach.adapters.gcp.audit:CloudAuditAdapter
+    onprem: proactive_outreach.adapters.onprem.audit:OnPremAuditAdapter
+  consent:
+    local: proactive_outreach.adapters.local.consent:LocalConsentAdapter
+    gcp: proactive_outreach.adapters.gcp.consent:RemoteConsentAdapter
+    onprem: proactive_outreach.adapters.onprem.consent:OnPremConsentAdapter
+  delivery:
+    local: proactive_outreach.adapters.local.delivery:LocalChatDelivery
+    gcp: proactive_outreach.adapters.gcp.delivery:ConversationChannelDelivery
+    onprem: proactive_outreach.adapters.onprem.delivery:OnPremDelivery
+  drafting:
+    local: proactive_outreach.adapters.local.drafting:TemplateDraftingAdapter
+    gcp: proactive_outreach.adapters.gcp.drafting:VertexDraftingAdapter
+    onprem: proactive_outreach.adapters.onprem.drafting:OnPremDraftingAdapter
+  events:
+    local: proactive_outreach.adapters.local.events:FixtureEventSource
+    gcp: proactive_outreach.adapters.gcp.events:WarehouseEventSource
+    onprem: proactive_outreach.adapters.onprem.events:OnPremEventSource
+  identity:
+    local: proactive_outreach.adapters.local.identity:LocalIdentityAdapter
+    gcp: proactive_outreach.adapters.gcp.identity:IapIdentityAdapter
+    onprem: proactive_outreach.adapters.onprem.identity:OnPremIdentityAdapter
+  review_router:
+    local: proactive_outreach.adapters.local.review_router:LocalReviewRouter
+    gcp: proactive_outreach.adapters.gcp.review_router:CloudReviewRouter
+    onprem: proactive_outreach.adapters.onprem.review_router:OnPremReviewRouter
+
+  # Tracing. Which BACKEND a deployed profile exports to is not a binding: the gcp
+  # adapter reads OTEL_EXPORTER_OTLP_ENDPOINT and sends OTLP to the Hrz5 collector when
+  # it is set, straight to Cloud Trace when it is not. Tracing is not essential to
+  # correctness, so onprem is ABSENT rather than fatal, unlike the other placeholders.
+  tracer:
+    local: proactive_outreach.adapters.local.tracer:LocalNoopTracerAdapter
+    gcp: proactive_outreach.adapters.gcp.tracer:CloudTracerAdapter
+    onprem: proactive_outreach.adapters.onprem.tracer:OnPremTracerAdapter
+
+  # The promotion authority (Hrz4). The local adapter scores offline but REFUSES to
+  # promote: a promotion certified by a laptop with no quality service is certified by
+  # nothing.
+  evaluation:
+    local: proactive_outreach.adapters.local.evaluation:LocalOfflineEvalAdapter
+    gcp: proactive_outreach.adapters.gcp.evaluation:ManagedEvalGateAdapter
+    onprem: proactive_outreach.adapters.onprem.evaluation:OnPremEvalAdapter
+  speech:
+    local: proactive_outreach.adapters.local.speech:FixtureSpeechSynthesis
+    gcp: proactive_outreach.adapters.gcp.speech:CloudTextToSpeech
+    onprem: proactive_outreach.adapters.onprem.speech:OnPremSpeechSynthesis
