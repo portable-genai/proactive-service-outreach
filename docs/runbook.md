@@ -66,27 +66,19 @@ review console, an edge with no consent store, an edge with no alert channel, a 
 version) without a project and without credentials. A real `terraform plan` needs a project and
 is an operator step.
 
-## Installing the private commons
+## Installing the commons
 
-Four of the six pinned commons are public repositories and install with no credential.
-`consent-preference-kit` and `speech-lexicon-kit` are PRIVATE, so an environment that cannot read
-them cannot run `make install` at all, and the failure looks like a network error rather than an
-authorisation one.
+All six pinned commons are public repositories in `portable-genai` and install with no
+credential: `make install` resolves every `git+https` line in the lockfiles anonymously.
 
-Provision the credential deliberately, before the first build rather than after a red pipeline:
+This section used to describe provisioning a read-only token, because `consent-preference-kit`
+and `speech-lexicon-kit` were private and an environment that could not read them failed with
+what looked like a network error rather than an authorisation one. Both went public on
+2026-08-22, so the credential and that failure mode are gone.
 
-```bash
-gh auth setup-git                 # a developer machine that already has gh
-git config --global url."https://x-access-token:$TOKEN@github.com/".insteadOf \
-    "https://github.com/"         # a build agent, with a read-only fine-grained token
-```
-
-The token needs read access to `portable-genai/consent-preference-kit` and
-`portable-genai/speech-lexicon-kit` and nothing else. Do not vendor a copy of either kit to avoid
-this: a vendored consent client is a second answer to a legal question about a person, which is
-the whole reason the kit exists.
-
-The lockfile headers carry the same note, so whoever reads the failure has it in front of them.
+One instruction from that period survives on its own merit: do not vendor a copy of either kit.
+A vendored consent client is a second answer to a legal question about a person, which is the
+whole reason the kit exists as one shared implementation.
 
 ## The IAP audience (required for the gcp profile)
 `OUTREACH_IAP_AUDIENCE` is the IAP-protected resource the assertion must be

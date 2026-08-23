@@ -73,8 +73,9 @@ never been applied. `docs/ADOPTING.md` and
 The remaining work is the one PARTIAL (A8) plus the deploy-time items the rows above name, none
 of which can be closed inside this repository alone.
 
-Worth recording beside them: two of the six pinned commons
-(`consent-preference-kit`, `speech-lexicon-kit`) are PRIVATE repositories, so an environment
-with no GitHub credential cannot install from the lockfiles at all. The lockfile headers and
-`docs/runbook.md` say so; the alternative fixes are publishing the kits or provisioning a
-read-only token, and both are decisions for the repository owner rather than for a build.
+Worth recording beside them, because it was carried here as an open constraint and is now
+closed: two of the six pinned commons (`consent-preference-kit`, `speech-lexicon-kit`) were
+PRIVATE repositories, so an environment with no GitHub credential could not install from the
+lockfiles at all. Of the two fixes named here, publishing the kits or provisioning a read-only
+token, the first happened: both kits went public in `portable-genai` on 2026-08-22, so every
+lockfile line resolves anonymously and `docs/runbook.md` no longer documents a credential.

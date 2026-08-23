@@ -30,10 +30,10 @@ without this codebase. The chain catches an edit, a deletion or a reorder; the e
 anchor, on a different volume under different credentials, is what catches a truncated tail,
 because a truncated chain still verifies perfectly on its own.
 
-## What about the two private commons?
+## What about the consent and speech commons?
 
 `consent-preference-kit` and `speech-lexicon-kit` are pinned by tag and by commit, are pure
 standard library with zero runtime dependencies, and are read-only dependencies of this repo.
-They are private repositories today, so a build environment needs a read credential; see the
-"Installing the private commons" section of `docs/runbook.md`. Vendoring a copy would be the
-wrong fix for a consent client.
+Both are public in `portable-genai` since 2026-08-22, so a build environment needs no credential
+at all; this answer used to describe provisioning one. Vendoring a copy is still the wrong fix
+for a consent client, for the reason `docs/runbook.md` gives.
