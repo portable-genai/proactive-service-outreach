@@ -174,7 +174,7 @@ run "serving_edge_contract" {
   }
 
   assert {
-    condition     = one([for item in google_cloud_run_v2_service.api[0].template[0].containers[0].env : item.value if item.name == "HRZ_HUMAN_REVIEW_URL"]) == var.human_review_url
+    condition     = one([for item in google_cloud_run_v2_service.api[0].template[0].containers[0].env : item.value if item.name == "HUMAN_REVIEW_URL"]) == var.human_review_url
     error_message = "Rule R8: the service must be told where an escalation is routed, or the managed router refuses."
   }
 
