@@ -843,7 +843,7 @@ class DemoRun:
             title="Next actions",
             rows=(
                 Row("Reviewer", "read the proposed message and approve or reject it"),
-                Row("Operator", "point HRZ_HUMAN_REVIEW_URL at the console and flush the outbox"),
+                Row("Operator", "point HUMAN_REVIEW_URL at the console and flush the outbox"),
             ),
         )
         facts = {

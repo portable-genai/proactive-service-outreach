@@ -118,8 +118,8 @@ production_edge_enabled = false
 # the Hrz7 console, and what it presents to the Mkt6 consent store.
 # additional_secret_env = {
 #   OUTREACH_S2S_TOKEN     = { secret_id = "outreach-inbound-s2s", version = "3" }
-#   HRZ7_S2S_TOKEN         = { secret_id = "hrz7-outbound-s2s", version = "2" }
-#   HRZ7_S2S_SIGNING_KEY   = { secret_id = "hrz7-actor-signing", version = "1" }
+#   HUMAN_REVIEW_S2S_TOKEN         = { secret_id = "hrz7-outbound-s2s", version = "2" }
+#   HUMAN_REVIEW_S2S_SIGNING_KEY   = { secret_id = "hrz7-actor-signing", version = "1" }
 #   CONSENT_S2S_TOKEN      = { secret_id = "mkt6-consent-s2s", version = "2" }
 #   CONSENT_S2S_SIGNING_KEY = { secret_id = "mkt6-actor-signing", version = "1" }
 # }

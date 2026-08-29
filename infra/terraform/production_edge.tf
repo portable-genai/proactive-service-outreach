@@ -18,7 +18,7 @@
 #
 # Two runtime variables are REQUIRED here and the rest are not, and the line between them is
 # "does the service still do its job without it":
-#   - HRZ_HUMAN_REVIEW_URL (rule R8) and MKT_CONSENT_STORE_URL (P-13) are required, because
+#   - HUMAN_REVIEW_URL (rule R8) and MKT_CONSENT_STORE_URL (P-13) are required, because
 #     without the first an escalation has nowhere to go and without the second every single
 #     contact is refused with consent_unknown. Both are refused at plan time (variables.tf).
 #   - OUTREACH_CHAT_AGENT, OUTREACH_DRAFTING_MODEL and OUTREACH_SPEECH_VOICE are not, because
@@ -148,7 +148,7 @@ resource "google_cloud_run_v2_service" "api" {
       # Rule R8: the console an escalation is routed to. Required whenever the edge is enabled
       # (variables.tf), because the managed router refuses rather than swallowing one.
       env {
-        name  = "HRZ_HUMAN_REVIEW_URL"
+        name  = "HUMAN_REVIEW_URL"
         value = var.human_review_url
       }
       # P-13: the consent authority. Also required, because there is no second copy of anybody's
