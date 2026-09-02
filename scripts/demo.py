@@ -8,7 +8,7 @@ stops being mentioned.
 
 Three properties make it worth running in front of somebody:
 
-* **Nothing is faked.** No stub service, no pre-baked JSON. The refusals, the cap arithmetic,
+* **Nothing is faked.** No engine stub, no pre-baked JSON. The refusals, the cap arithmetic,
   the discarded draft, the audit records, the routing references and the tamper verdict are all
   produced by the shipped code.
 * **It is bounded.** The demo proves an offline, single-process seam. It does not prove

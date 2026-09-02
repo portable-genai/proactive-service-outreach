@@ -26,7 +26,7 @@ other receives everything that must not go out automatically.
 `make gate` is offline, credential-free and network-free: lint, format, mypy strict, the whole
 test suite except integration, and six eval metrics. `make demo-selftest` runs the nine-step
 demo headless and asserts every narrated claim. `make portability` runs the exit tour. All three
-run in CI on every push.
+run in the hosted check on every pull request and every push to main.
 
 ## The evals all report 1.000. Should we believe them?
 
