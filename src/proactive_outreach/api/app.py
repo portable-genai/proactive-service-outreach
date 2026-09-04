@@ -326,7 +326,8 @@ def evaluate(
     cannot ask about another tenant's subject by typing its name. The audit actor is the same
     principal.
 
-    Rule R8: a result that sets ``requires_human_review`` is ROUTED to the Hrz7 console here,
+    Rule R8: a result that sets ``requires_human_review`` is ROUTED to the human-review-console
+    here,
     in the same request that produced it, and NOTHING was delivered. Setting the flag is not
     the escalation; routing is.
     """

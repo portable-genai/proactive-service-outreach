@@ -118,7 +118,9 @@ def test_the_offline_outbox_flushes_the_payload_the_managed_router_would_submit(
 
 
 def test_the_payload_that_reaches_the_wire_is_redacted_whichever_family_built_it() -> None:
-    """Hrz7 is a shared sink, so this holds for every family, not only the one under demo."""
+    """human-review-console is a shared sink, so this holds for every family, not only the one under
+    demo.
+    """
     container = build_container(local_settings())
     result = build_service(container).evaluate(
         sample_cases.PII_EVENT, actor=sample_cases.ACTOR, as_of=sample_cases.OPEN_INSTANT

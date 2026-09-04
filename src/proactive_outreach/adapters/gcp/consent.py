@@ -1,10 +1,10 @@
 """Managed ConsentPort: ask the real consent and preference store, over ``consent-preference-kit``.
 
-The store lives inside Mkt6. This adapter is a thin binding onto the pinned client kit, which
-carries the wire types, the https-only guard, the three-state credential resolution and the
-S2S headers. No cloud SDK is involved: the kit is pure stdlib ``urllib``, so this module imports
-cleanly with no GCP SDK present and is bound in the managed profile because it makes a real
-network call to a sibling service.
+The store lives inside marketing-compliance-gate. This adapter is a thin binding onto the pinned
+client kit, which carries the wire types, the https-only guard, the three-state credential
+resolution and the S2S headers. No cloud SDK is involved: the kit is pure stdlib ``urllib``, so this
+module imports cleanly with no GCP SDK present and is bound in the managed profile because it makes
+a real network call to a sibling service.
 
 Two fail-closed choices worth naming:
 
@@ -33,7 +33,9 @@ _SERVICE_ACTOR = "proactive-service-outreach"
 
 
 class RemoteConsentAdapter:
-    """Ask the Mkt6 consent and preference store whether this contact is permitted."""
+    """Ask the marketing-compliance-gate consent and preference store whether this contact is
+    permitted.
+    """
 
     def __init__(self, settings: Settings) -> None:
         self._settings = settings

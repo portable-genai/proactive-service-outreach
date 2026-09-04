@@ -211,7 +211,7 @@ loopback bound off a derived `bind_profile`, because those two fail closed in op
 see `config.ProfileChoice`.
 
 ## Human review routing (rule R8)
-Set `HUMAN_REVIEW_URL` to the Hrz7 console (HTTPS is required off loopback) and provide
+Set `HUMAN_REVIEW_URL` to the `human-review-console` (HTTPS is required off loopback) and provide
 `HUMAN_REVIEW_S2S_TOKEN`; `HUMAN_REVIEW_S2S_SIGNING_KEY` optionally signs the propagated actor. These are the
 OUTBOUND credentials and are deliberately distinct from this service's own inbound
 `OUTREACH_S2S_TOKEN`. With the URL unset, the managed router REFUSES rather
@@ -256,7 +256,7 @@ Operating rules:
 ## Agent surface
 The A2A discovery card is served at `/.well-known/agent-card.json` and is built from the same
 tool table the runtime binds, so it cannot advertise a skill the service does not implement.
-Register it with the Hrz3 registry (rule R4). The tools themselves need no agent runtime to run;
+Register it with the `agent-registry` (rule R4). The tools themselves need no agent runtime to run;
 only `build_function_tools()` imports one.
 
 ## Running the integration tests
@@ -277,7 +277,7 @@ service is SILENCE rather than an error:
 
 | Alert | Fires on | Why it is not noise |
 |---|---|---|
-| `consent_unavailable` | a refusal carrying `consent_unknown` | the eligibility engine returns it when the Mkt6 store gave no usable answer. Refusing is correct; it is also exactly what a total store outage looks like, and while it lasts this service contacts nobody while every request still answers 200 |
+| `consent_unavailable` | a refusal carrying `consent_unknown` | the eligibility engine returns it when the `marketing-compliance-gate` store gave no usable answer. Refusing is correct; it is also exactly what a total store outage looks like, and while it lasts this service contacts nobody while every request still answers 200 |
 | `policy_gap_refusals` | a refusal carrying `frequency_cap_unconfigured` or `quiet_hours_unconfigured` | an unconfigured cap or market DENIES by design, so a policy gap presents as customers not being told things. This is the alert that tells the policy owner they have a hole rather than a quiet quarter |
 | `draft_discarded` | the validator refused what the model wrote | one is a working control; a rate of them is a model or prompt regression, and each costs a human a review |
 

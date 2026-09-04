@@ -14,8 +14,9 @@ Two of the eight are not declared in this package at all, and that is the point:
   writes its own speech types is a repo that will disagree with its siblings about what a
   customer was told and when.
 
-``ConsentPort`` is declared here but its wire TYPES come from ``consent-preference-kit``,
-because the consent store itself is Mkt6's asset and this system is one of its consumers.
+``ConsentPort`` is declared here but its wire TYPES come from ``consent-preference-kit``, because
+the consent store itself is marketing-compliance-gate's asset and this system is one of its
+consumers.
 """
 
 from __future__ import annotations

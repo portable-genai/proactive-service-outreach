@@ -10,24 +10,23 @@ through it rather than reassembling the steps in its own sequence.
 The square brackets are the point. Nothing inside them happens unless the step before it
 answered yes:
 
-1. **Redact first.** The source system's free-text ``detail`` is masked with the shared pattern
-   pack before it is used for anything at all, so no raw identifier can reach a model, a
-   citation, the wire or the immutable audit record. Redacting after a write would be too late,
-   because the record is immutable by then.
-2. **The model is not consulted until eligibility passes.** A contact that may not be made
-   costs no tokens, sends no facts to a model and leaves no draft lying around. The drafting
-   port is unreachable from the eligibility engine, and this method calls it only inside the
-   ``eligible`` branch, which ``tests/unit/test_outreach_service.py`` proves with a spy that
-   fails the build if it is ever called on a refused contact.
-3. **Whatever the model writes is validated and discarded on failure.** A discarded draft is
-   not repaired and not quietly replaced with a sent template: the deterministic body is
-   prepared for a HUMAN, ``requires_human_review`` is set, and nothing goes out.
-4. **Consequential outreach never auto-executes** (rule R8). A fraud hold and an outage are
-   marked consequential in policy: they are routed to the Hrz7 console and delivered by nobody
-   until a human approves. The flag is set here; the routing is done by the caller in the same
-   request, because a flag nobody reads is auto-execution with extra steps.
-5. **The send is recorded back to the consent store.** A frequency cap counts recorded sends
-   and nothing else, so a consumer that decides but never records passes every cap forever.
+1. **Redact first.** The source system's free-text ``detail`` is masked with the shared pattern pack
+   before it is used for anything at all, so no raw identifier can reach a model, a citation, the
+   wire or the immutable audit record. Redacting after a write would be too late, because the record
+   is immutable by then. 2. **The model is not consulted until eligibility passes.** A contact that
+   may not be made costs no tokens, sends no facts to a model and leaves no draft lying around. The
+   drafting port is unreachable from the eligibility engine, and this method calls it only inside
+   the ``eligible`` branch, which ``tests/unit/test_outreach_service.py`` proves with a spy that
+   fails the build if it is ever called on a refused contact. 3. **Whatever the model writes is
+   validated and discarded on failure.** A discarded draft is not repaired and not quietly replaced
+   with a sent template: the deterministic body is prepared for a HUMAN, ``requires_human_review``
+   is set, and nothing goes out. 4. **Consequential outreach never auto-executes** (rule R8). A
+   fraud hold and an outage are marked consequential in policy: they are routed to the
+   human-review-console and delivered by nobody until a human approves. The flag is set here; the
+   routing is done by the caller in the same request, because a flag nobody reads is auto-execution
+   with extra steps. 5. **The send is recorded back to the consent store.** A frequency cap counts
+   recorded sends and nothing else, so a consumer that decides but never records passes every cap
+   forever.
 """
 
 from __future__ import annotations

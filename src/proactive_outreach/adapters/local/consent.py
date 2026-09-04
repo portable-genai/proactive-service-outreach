@@ -1,4 +1,5 @@
-"""Local ConsentPort: an offline stand-in for the Mkt6 consent and preference store.
+"""Local ConsentPort: an offline stand-in for the marketing-compliance-gate consent and preference
+store.
 
 It answers from a synthetic record set (:mod:`.fixtures`) using the SAME wire types the real
 store serves, so the offline gate exercises the real parsing, the real vocabulary and the real

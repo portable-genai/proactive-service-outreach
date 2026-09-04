@@ -60,7 +60,7 @@ place (`domain/outreach_service.py`) and every surface goes through it.
 - **The cap takes the SMALLER of two authorities**: this deployment's configured limit and any
   limit the consent store reports. Neither can be widened by the other's silence. A delivered
   message is recorded back to the store, because a cap counts recorded sends and nothing else.
-- **The consent store is Mkt6's, not this repo's.** This system asks it through
+- **The consent store is `marketing-compliance-gate`'s, not this repo's.** This system asks it through
   `consent-preference-kit` and holds no second copy of anybody's consent. On the managed profile
   an unset store URL REFUSES rather than falling back to anything.
 - **The model may phrase and may not inform.** The drafting port is the only seam a model is
@@ -82,7 +82,7 @@ place (`domain/outreach_service.py`) and every surface goes through it.
   and no verdict.
 - **Maker-checker (P-06) and routing (R8)**: an event type marked `consequential` in policy
   (`fraud_hold` and `outage` in the shipped set) sets `requires_human_review=True`, is NOT
-  delivered, and is routed through `ReviewRouterPort` to the Hrz7 console in the same request,
+  delivered, and is routed through `ReviewRouterPort` to the `human-review-console` in the same request,
   with the proposed words attached so the reviewer can approve the sentence. A discarded draft
   does the same. The flag alone is not the escalation. The response carries `review_ref`, so a
   caller can tell a routed escalation from one that stopped here. The managed adapter refuses to
@@ -130,7 +130,7 @@ place (`domain/outreach_service.py`) and every surface goes through it.
   resolved server-side and the resolved headers are attached afterwards. The service credential
   is read from the server environment only. Framing and CORS are allowlists that refuse a
   wildcard however it is written, and an empty allowlist denies rather than opening up.
-- **Eval**: `--mode smoke` is the offline pre-merge check; `--mode gate` is the Hrz4 promotion
+- **Eval**: `--mode smoke` is the offline pre-merge check; `--mode gate` is the `model-quality-gate` promotion
   authority. The gate fails closed.
 - **Tests**: split into `unit`, `contract` and `integration`. The offline gate runs the first
   two; every integration module is marked, and that marking is itself enforced.

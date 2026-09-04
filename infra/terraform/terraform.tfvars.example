@@ -91,8 +91,8 @@ production_edge_enabled = false
 #   drafting_model      empty means no drafter: deterministic body, human review, no send
 #   chat_agent          empty means no channel, and delivery refuses
 #   speech_voice        empty means no voice, and synthesis refuses
-#   quality_service_url the Hrz4 promotion authority; emptied names no authority at all
-#   otlp_endpoint       the Hrz5 collector; unset exports straight to Cloud Trace
+#   quality_service_url the model-quality-gate promotion authority; emptied names no authority at all
+#   otlp_endpoint       the agent-observability collector; unset exports straight to Cloud Trace
 # drafting_model      = "gemini-3.5-flash"
 # chat_agent          = "projects/fictional-outreach-sg/locations/asia-southeast1/agents/00000000-0000-0000-0000-000000000000"
 # speech_voice        = "en-SG-Standard-A"
@@ -115,7 +115,7 @@ production_edge_enabled = false
 
 # Credentials arrive as pinned Secret Manager versions, never as values here. Three
 # trust relationships, five variables: what this service accepts, what it presents to
-# the Hrz7 console, and what it presents to the Mkt6 consent store.
+# the human-review-console, and what it presents to the marketing-compliance-gate consent store.
 # additional_secret_env = {
 #   OUTREACH_S2S_TOKEN     = { secret_id = "outreach-inbound-s2s", version = "3" }
 #   HUMAN_REVIEW_S2S_TOKEN         = { secret_id = "hrz7-outbound-s2s", version = "2" }

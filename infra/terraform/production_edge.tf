@@ -83,7 +83,7 @@ locals {
 
 # --------------------------------------------------------------------------- #
 # Secrets. No secret VALUE is ever in this configuration: the inbound service
-# credential and the outbound Hrz7 and Mkt6 pairs are existing Secret Manager
+# credential and the outbound human-review-console and marketing-compliance-gate pairs are existing Secret Manager
 # versions, referenced by id and pinned to an exact numeric version.
 # --------------------------------------------------------------------------- #
 resource "google_secret_manager_secret_iam_member" "api_env" {

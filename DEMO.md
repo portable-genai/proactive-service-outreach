@@ -61,7 +61,7 @@ State the bounds yourself. An unbounded claim is the one an auditor disproves fo
 |---|---|---|
 | Runs with no cloud, credentials or network | the whole demo, plus `make gate` | that the managed profile works: that needs a project and lives in `tests/integration/` |
 | Whether a customer is contacted is decided by pure code, and replays | steps 2 and 3, `make gate` | that a model's phrasing is deterministic; it is not, and it never decides |
-| An unknown consent state never permits contact | step 3, the `consent_fail_closed` metric at 1.0 | that the consent RECORDS are correct; they are Mkt6's, and this service asks rather than holds them |
+| An unknown consent state never permits contact | step 3, the `consent_fail_closed` metric at 1.0 | that the consent RECORDS are correct; they are `marketing-compliance-gate`'s, and this service asks rather than holds them |
 | A model cannot introduce a figure into a message | step 4, the `drafting_groundedness` metric at 1.0 | that the wording is good; a human still reviews the templates |
 | Consequential outreach is not sent without a human | step 6, the `review_safety` metric at 1.0 | that a reviewer acted; the queue shows submitted, not reviewed |
 | The audit record is tamper-evident and portable | steps 7 and 8, `make portability` | tamper-PROOF: file access beats any store |
