@@ -253,7 +253,7 @@ variable "event_view_dataset" {
 
 variable "human_review_url" {
   description = <<-EOT
-    The Hrz7 human-review console the managed review router submits escalations to
+    The human-review-console the managed review router submits escalations to
     (HUMAN_REVIEW_URL). Rule R8 says an escalation is ROUTED and never merely flagged, and
     the managed router refuses rather than swallowing one when this is empty, so the serving
     edge requires it: a deploy that would ship R8 unwired fails here instead of at the first
@@ -276,7 +276,7 @@ variable "human_review_url" {
 
 variable "consent_store_url" {
   description = <<-EOT
-    The Mkt6 consent and preference store this service ASKS on every contact
+    The marketing-compliance-gate consent and preference store this service ASKS on every contact
     (MKT_CONSENT_STORE_URL). Required when the serving edge is enabled, and required for the
     same reason as human_review_url: the managed consent adapter has no local fallback and no
     cached answer, because a second copy of anybody's consent would be a second answer to a
@@ -362,7 +362,7 @@ variable "service_tenant" {
 
 variable "quality_service_url" {
   description = <<-EOT
-    The Hrz4 AI-quality service that owns the promotion verdict (OUTREACH_QUALITY_URL). Empty
+    The model-quality-gate AI-quality service that owns the promotion verdict (OUTREACH_QUALITY_URL). Empty
     leaves the variable unset, so the application takes its documented default. Never set it to
     an empty string on the service: the eval adapter treats SET-AND-EMPTY as naming no
     promotion authority at all, and refuses.
@@ -374,7 +374,7 @@ variable "quality_service_url" {
 variable "otlp_endpoint" {
   description = <<-EOT
     OpenTelemetry collector endpoint (OTEL_EXPORTER_OTLP_ENDPOINT, rule R2). Set it to the
-    Hrz5 collector to send spans there; leave it empty and the tracer exports straight to Cloud
+    agent-observability collector to send spans there; leave it empty and the tracer exports straight to Cloud
     Trace. Empty means the variable is not set on the service at all.
   EOT
   type        = string
@@ -406,7 +406,7 @@ variable "additional_secret_env" {
   description = <<-EOT
     Environment variable name to an immutable existing Secret Manager secret version, mounted
     on the API service. This is how the inbound service credential (OUTREACH_S2S_TOKEN), the
-    outbound Hrz7 pair (HUMAN_REVIEW_S2S_TOKEN, HUMAN_REVIEW_S2S_SIGNING_KEY) and the outbound Mkt6 consent
+    outbound human-review-console pair (HUMAN_REVIEW_S2S_TOKEN, HUMAN_REVIEW_S2S_SIGNING_KEY) and the outbound marketing-compliance-gate consent
     pair (CONSENT_S2S_TOKEN, CONSENT_S2S_SIGNING_KEY) reach the process: no secret value is
     ever written into this configuration. Three trust relationships, five variables, and the
     three pairs are deliberately distinct. Names this stack sets itself are reserved, so a

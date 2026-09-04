@@ -75,7 +75,9 @@ def main(argv: list[str] | None = None) -> int:
     evaluate_cmd.add_argument("--detail", default="")
     evaluate_cmd.add_argument("--attribute", action="append", default=[], help=_ATTRIBUTE_HELP)
     evaluate_cmd.add_argument("--actor", default="cli-user@bank.example")
-    evaluate_cmd.add_argument("--tenant", default="", help="Tenant partition asserted to Hrz7.")
+    evaluate_cmd.add_argument(
+        "--tenant", default="", help="Tenant partition asserted to human-review-console."
+    )
 
     sweep_cmd = sub.add_parser("sweep", help="Evaluate every detected event for a tenant.")
     sweep_cmd.add_argument("--tenant", default="demo-bank")

@@ -1,4 +1,5 @@
-"""ConsentPort: the boundary onto the catalog's consent and preference store (Mkt6).
+"""ConsentPort: the boundary onto the catalog's consent and preference store
+(marketing-compliance-gate).
 
 **This repo builds no consent store.** The store lives inside the marketing compliance and
 brand governance system, which already models consent as a rule with its own engine and its own

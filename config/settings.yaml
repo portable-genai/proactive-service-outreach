@@ -43,7 +43,7 @@ iap_audience: ${OUTREACH_IAP_AUDIENCE:-}
 # deliberately distinct from this service's own inbound OUTREACH_S2S_TOKEN.
 review_url: ${HUMAN_REVIEW_URL:-}
 
-# The consent and preference store this service ASKS (Mkt6). There is deliberately no local
+# The consent and preference store this service ASKS (marketing-compliance-gate). There is deliberately no local
 # fallback: an unset value refuses under the managed profile rather than answering a legal
 # question about a person from a cache nobody governs. Credentials are CONSENT_S2S_TOKEN /
 # CONSENT_S2S_SIGNING_KEY (see .env.secrets.example), read by consent-preference-kit itself.
@@ -109,7 +109,7 @@ policy:
       max_age_hours: 720
       required_attributes: [card_suffix, expires_on]
     # Consequential: a fraud hold is never delivered automatically. It is drafted, held and
-    # routed to the Hrz7 console, and a human approves the words before the customer hears them.
+    # routed to the human-review-console, and a human approves the words before the customer hears them.
     fraud_hold:
       template_id: fraud_hold_verify
       purpose: service
@@ -233,7 +233,7 @@ adapters:
     onprem: proactive_outreach.adapters.onprem.review_router:OnPremReviewRouter
 
   # Tracing. Which BACKEND a deployed profile exports to is not a binding: the gcp
-  # adapter reads OTEL_EXPORTER_OTLP_ENDPOINT and sends OTLP to the Hrz5 collector when
+  # adapter reads OTEL_EXPORTER_OTLP_ENDPOINT and sends OTLP to the agent-observability collector when
   # it is set, straight to Cloud Trace when it is not. Tracing is not essential to
   # correctness, so onprem is ABSENT rather than fatal, unlike the other placeholders.
   tracer:
@@ -241,7 +241,7 @@ adapters:
     gcp: proactive_outreach.adapters.gcp.tracer:CloudTracerAdapter
     onprem: proactive_outreach.adapters.onprem.tracer:OnPremTracerAdapter
 
-  # The promotion authority (Hrz4). The local adapter scores offline but REFUSES to
+  # The promotion authority (model-quality-gate). The local adapter scores offline but REFUSES to
   # promote: a promotion certified by a laptop with no quality service is certified by
   # nothing.
   evaluation:

@@ -8,8 +8,8 @@
 #         resources the sibling files create.
 #
 # Two bound adapters need NO API here, and that is worth naming rather than leaving to a
-# reader's inference. adapters/gcp/consent.py (the Mkt6 consent and preference store) and
-# adapters/gcp/review_router.py (the Hrz7 console, rule R8) are pure stdlib urllib over
+# reader's inference. adapters/gcp/consent.py (the marketing-compliance-gate consent and preference store) and
+# adapters/gcp/review_router.py (the human-review-console, rule R8) are pure stdlib urllib over
 # consent-preference-kit and review-kit. They call sibling SERVICES over HTTPS, not Google
 # APIs, so they are a network-egress and Secret Manager concern and nothing is enabled for
 # them. In particular, depending on consent-preference-kit implies no GCP resource at all.

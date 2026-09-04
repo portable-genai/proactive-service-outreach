@@ -33,7 +33,7 @@ everything else in `domain/` is this vertical.
 
 If your product is another *consent-gated outbound* system, most of this transfers directly: the
 hexagon, the three families, the fail-closed eligibility pattern, the discard-on-failure drafting
-path and the Hrz7 routing. You replace the trigger rules and the templates, and you retune the
+path and the `human-review-console` routing. You replace the trigger rules and the templates, and you retune the
 policy numbers.
 
 ## 2. Core-vs-adopter-owned files (so upstream merges stay mechanical)
@@ -78,7 +78,7 @@ make gate
 There is deliberately no `--cli` flag: `[project.scripts]` names the console script after the
 package, so `--package` renames both and a second flag could only drift out of step. There is no
 `--dist` flag either: the distribution name, the GitHub id in `[project.urls]`, the A2A
-agent-card name and the Hrz4 eval bundle id are the same one literal, and `--resource` renames
+agent-card name and the `model-quality-gate` eval bundle id are the same one literal, and `--resource` renames
 it. Add `--include-docs` to sweep Markdown prose too. The script deliberately does NOT touch the
 human decisions below.
 
@@ -105,7 +105,7 @@ human decisions below.
    is deliberate, and it means adding a market is a policy act rather than an oversight. Own
    these with your conduct and compliance functions, and pin your values with a test.
 4. **The consent store.** There is no consent store in this repo and there must not be one:
-   `consent-preference-kit` is the client half and Mkt6 owns the record. Point `consent_url`
+   `consent-preference-kit` is the client half and `marketing-compliance-gate` owns the record. Point `consent_url`
    (`MKT_CONSENT_STORE_URL`) at your deployment and load the subjects and purposes this service
    will ask about. Every unknown consent state denies (`domain/eligibility.py`), so a
    misconfigured store refuses to contact anyone rather than contacting everyone.
@@ -134,19 +134,19 @@ This repo is one system in a catalog of composable GRC systems. Several concerns
 owned by sibling services, and you integrate rather than rebuild them. See
 [`faq/features.md`](faq/features.md) for the full boundary map.
 
-- **Mkt6** consent and preference store: consumed through `consent-preference-kit`. This service
+- `marketing-compliance-gate` consent and preference store: consumed through `consent-preference-kit`. This service
   holds no second copy of anybody's consent, because a second copy is a second answer to a legal
   question about a person.
-- **Hrz7** human-review console: every held result is routed there in the same call that produced
+- `human-review-console`: every held result is routed there in the same call that produced
   it, over the shared `review-kit` (rule R8). You wire your endpoint; you do not
   re-implement the console.
-- **Hrz1** guardrail gateway: the injection-defence and output-filtering hop for the drafted body.
-- **Hrz3** agent registry: this agent publishes its A2A card at
+- `agent-guardrail-gateway`: the injection-defence and output-filtering hop for the drafted body.
+- `agent-registry`: this agent publishes its A2A card at
   `/.well-known/agent-card.json` for discovery.
-- **Hrz4** AI-quality and model-risk gate: owns promotion. `eval/run_eval.py --mode gate`
+- `model-quality-gate`: owns promotion. `eval/run_eval.py --mode gate`
   delegates the verdict to it, and refuses to run off the managed profile.
-- **Hrz5** observability and immutable WORM audit: trace spans and audit events go there.
-- **Hrz2** enterprise knowledge base: **not** integrated, and should not be. This service
+- `agent-observability` and immutable WORM audit: trace spans and audit events go there.
+- `enterprise-knowledge-base`: **not** integrated, and should not be. This service
   retrieves nothing. Its messages are rendered from a closed fact set the trigger engine
   assembled, so there is no retrieval path to ground.
 
@@ -158,11 +158,11 @@ owned by sibling services, and you integrate rather than rebuild them. See
 - [ ] Configured IAP on the deployed service and set `OUTREACH_IAP_AUDIENCE`, or implemented the
       `onprem` identity adapter.
 - [ ] Replaced every value in the `policy:` block with your own, and pinned them with a test.
-- [ ] Pointed `consent_url` at your Mkt6 deployment and loaded the subjects and purposes.
+- [ ] Pointed `consent_url` at your `marketing-compliance-gate` deployment and loaded the subjects and purposes.
 - [ ] Pointed `event_view` at your warehouse view and confirmed the column contract.
 - [ ] Had your conduct function sign off the message templates and the `consequential` flags.
 - [ ] Replaced every synthetic fixture and event.
 - [ ] Rebuilt the eval golden set and rubrics for your triggers.
 - [ ] Reviewed the deploy posture (Dockerfile, Terraform, bind address) before exposing anything.
-- [ ] Wired your Hrz7 endpoint and decided which sibling services you integrate vs stub.
+- [ ] Wired your `human-review-console` endpoint and decided which sibling services you integrate vs stub.
 - [ ] Recorded your baseline upstream tag so you can take future fixes.

@@ -41,7 +41,7 @@ Break one of these and the change is a defect, not a trade-off. Each has a stand
 - **No surface may accept an `as_of`.** Quiet hours turn on it. If you find yourself adding one
   to a request schema, a tool signature or a CLI flag, the feature you want is probably a
   reporting query rather than a decision.
-- **Do not build a consent store here.** It is Mkt6's. Consume it through
+- **Do not build a consent store here.** It is `marketing-compliance-gate`'s. Consume it through
   `consent-preference-kit`, and if the wire types need to change, change the kit and bump the
   pin.
 - **A cap counts recorded sends.** Anything that delivers must call `record_send`, or the cap it

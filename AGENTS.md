@@ -145,7 +145,7 @@ Hexagonal, ports and adapters:
   decision replays, but quiet hours are evaluated against it, so a caller who could choose it
   could evade them. It matters most on the agent surface, where the caller is a model. No
   request schema, tool parameter or CLI flag offers one.
-- **No consent store is built here.** It lives in Mkt6 and is consumed through
+- **No consent store is built here.** It lives in `marketing-compliance-gate` and is consumed through
   `consent-preference-kit`. A second store would be a second answer to a legal question about a
   person. The offline adapter answers from a synthetic record set using the store's own wire
   types, so the gate exercises the real parsing rather than a kinder second implementation.

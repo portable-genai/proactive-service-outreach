@@ -23,8 +23,8 @@
 #
 # NOTE on egress: VPC-SC governs access to GOOGLE APIs across perimeters, not arbitrary
 # internet egress. This service makes TWO outbound calls to non-Google hosts, and both are
-# ordinary HTTPS: the consent question to the Mkt6 store (P-13) and the escalation routed to
-# the Hrz7 console (rule R8). Both are a VPC firewall and Cloud NAT concern, not a VPC-SC
+# ordinary HTTPS: the consent question to the marketing-compliance-gate store (P-13) and the escalation routed to
+# the human-review-console (rule R8). Both are a VPC firewall and Cloud NAT concern, not a VPC-SC
 # egress rule. Run the service with egress that reaches exactly those two hosts and nothing
 # else; a service that can reach the open internet can be told to contact somebody through it.
 

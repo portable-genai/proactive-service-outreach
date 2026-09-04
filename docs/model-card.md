@@ -25,7 +25,7 @@ is a bounded, replaceable component that phrases a notification which has alread
 - **Redaction happens before anything is recorded.** `domain/outreach_service.py` redacts the
   source-system detail with `pii_kit.redact` against this deployment's jurisdiction pattern
   pack before the audit write and before any outbound payload, so a raw identifier never reaches
-  a WORM record or the Hrz7 review console.
+  a WORM record or the `human-review-console`.
 - **The prompt is a closed fact set.** `adapters/gcp/drafting.py` sends a template id, a locale,
   a channel and the facts the trigger engine assembled. Not the event, not the free-text detail,
   not the subject id, not the consent decision. The instruction itself is a module constant, so
@@ -39,7 +39,7 @@ is a bounded, replaceable component that phrases a notification which has alread
   `tests/unit/test_drafting.py` has a named test per rejection shape, including
   `test_a_rejected_draft_is_never_repaired_into_a_message`.
 - **A held result is a result that was NOT delivered.** For a `consequential` trigger (a fraud
-  hold, an outage notice) the service sets `requires_human_review` and routes to Hrz7 in the same
+  hold, an outage notice) the service sets `requires_human_review` and routes to `human-review-console` in the same
   call, and the API, the CLI, the agent tools and the contract suite all assert the delivery did
   not happen rather than merely that a flag was set (rule R8).
 - **No surface lets its caller choose the instant.** The domain takes an explicit `as_of` so a
@@ -69,10 +69,10 @@ facts the generator chose would be a tautology.
   switch is cheap here because the deterministic template body always exists: it is the same
   path a rejected draft already takes.
 - **Evaluation of the live model.** The offline eval scores the validator and the deterministic
-  pipeline. Add a managed-profile run through the Hrz4 promotion gate that scores real drafted
+  pipeline. Add a managed-profile run through the `model-quality-gate` promotion gate that scores real drafted
   bodies for groundedness, locale fidelity and banned-phrase rate against the same golden cases.
 - **Prompt-injection screening.** Event attributes reach the prompt as facts. Screen them through
-  the Hrz1 guardrail gateway before generation, failing closed to the template body when the
+  the `agent-guardrail-gateway` before generation, failing closed to the template body when the
   screen is unavailable. That port is not bound in this repo today.
 - **Voice consent and retention.** Synthesised audio persists in a bucket. Record who may listen
   to it, for how long it is kept, and how a subject-access request reaches it.

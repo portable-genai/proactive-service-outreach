@@ -17,7 +17,7 @@
 # Three of the eight are this vertical's own, and they exist because this service sends
 # outbound contact and its interesting failure is SILENCE:
 #   - consent_unavailable : a contact was refused with consent_unknown, which is what the
-#     eligibility engine returns when the Mkt6 store gave no usable answer at all. Refusing is
+#     eligibility engine returns when the marketing-compliance-gate store gave no usable answer at all. Refusing is
 #     correct and it is also the shape of a total outage: with the store unreachable this
 #     service contacts nobody, forever, while every request still answers 200. Nothing else in
 #     the stack would page anyone.

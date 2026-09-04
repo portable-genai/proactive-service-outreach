@@ -433,7 +433,7 @@ class Settings:
     #: that verifies perfectly. Empty means no anchor, which is right for the ephemeral
     #: ``:memory:`` store and wrong for anything durable.
     audit_anchor_path: str = ""
-    #: Base URL of the Hrz7 Human-Review console the R8 producer path submits to.
+    #: Base URL of the human-review-console Human-Review console the R8 producer path submits to.
     review_url: str = ""
     #: The audience the managed IAP identity adapter verifies the signed assertion AGAINST: the
     #: IAP-protected resource, ``/projects/<NUM>/global/backendServices/<ID>`` behind an HTTPS
@@ -450,7 +450,8 @@ class Settings:
     #: in a trace resource path. Empty is valid: on Cloud Run the exporter resolves
     #: it from the metadata server.
     project_id: str = ""
-    #: Base URL of the Mkt6 consent and preference store this service ASKS. There is no local
+    #: Base URL of the marketing-compliance-gate consent and preference store this service ASKS.
+    #: There is no local
     #: fallback and no second store: an unset value refuses under the managed profile rather
     #: than answering a legal question about a person from a cache nobody governs.
     consent_url: str = ""

@@ -6,7 +6,7 @@
 #         channel, write the audio object, write audit and traces, read its own secrets). No
 #         shared kitchen-sink account and no primitive roles.
 #   P-03 (residency): the identity is project-scoped and every service it reaches is regional.
-#   P-13 / R8: asking the Mkt6 consent store and routing an escalation to the Hrz7 console are
+#   P-13 / R8: asking the marketing-compliance-gate consent store and routing an escalation to the human-review-console are
 #         outbound HTTPS calls carrying service credentials from Secret Manager, not GCP IAM
 #         roles, so nothing is granted for either here.
 #

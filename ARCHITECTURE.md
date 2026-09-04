@@ -70,7 +70,7 @@ service sells. Written out:
 
 1. the source system's free-text detail is masked (P-04) before it reaches anything at all;
 2. the trigger engine decides, from configured rules, whether the event is worth a contact;
-3. the consent store (Mkt6, through `consent-preference-kit`) is asked one question, pinned to
+3. the consent store (`marketing-compliance-gate`, through `consent-preference-kit`) is asked one question, pinned to
    one instant. Any failure to obtain an answer becomes "no decision", which denies;
 4. the eligibility engine composes consent, suppression, the frequency cap and quiet hours,
    worst-wins, failing closed on anything it does not fully understand;
@@ -81,7 +81,7 @@ service sells. Written out:
 7. the decision, including every refusal, is written to the already-redacted WORM trail.
 
 A consequential event type, or a discarded draft, sets `requires_human_review`, delivers
-NOTHING, and is routed to Hrz7 (R8) by the caller in the same request. The audit actor and the
+NOTHING, and is routed to `human-review-console` (R8) by the caller in the same request. The audit actor and the
 review maker are both the verified `Principal`, never the request body, and the tenant comes
 from the principal too.
 
@@ -92,12 +92,12 @@ thing replayable; no surface lets its caller choose it, because quiet hours turn
 | Port | local | gcp | onprem |
 |---|---|---|---|
 | `AuditSinkPort` | hash-chained SQLite WORM (commons) | Cloud Logging WORM (lazy) | placeholder |
-| `ConsentPort` | synthetic record set, same wire types | Mkt6 consent store over S2S (stdlib) | placeholder |
+| `ConsentPort` | synthetic record set, same wire types | `marketing-compliance-gate` consent store over S2S (stdlib) | placeholder |
 | `DraftingPort` | deterministic template in the drafter's envelope | managed model (lazy) | placeholder |
 | `EventDetectionPort` | fixture events, stable order | client-owned warehouse view (lazy) | placeholder |
 | `IdentityPort` | seeded personas (commons) | IAP assertion (lazy) | placeholder |
 | `MessageDeliveryPort` | in-process chat outbox with the envelope | conversation platform (lazy) | placeholder |
-| `ReviewRouterPort` | review-kit outbox (offline, inspectable) | Hrz7 service intake over S2S | placeholder |
+| `ReviewRouterPort` | review-kit outbox (offline, inspectable) | `human-review-console` service intake over S2S | placeholder |
 | `TextToSpeechPort` | deterministic audio reference, no bytes | managed speech + in-region bucket (lazy) | placeholder |
 
 The on-prem placeholders RAISE. Three of them matter more than the rest: a review router that
@@ -107,7 +107,7 @@ frequency cap and tell the consent store about it; and a consent adapter that re
 at all would be inventing a legal position about a person.
 
 Note what the consent row is NOT. There is no local consent STORE, on any profile. The store
-lives inside Mkt6, which already models consent and already owns the rule engine a denial cites;
+lives inside `marketing-compliance-gate`, which already models consent and already owns the rule engine a denial cites;
 this repo is one of its consumers, and the offline adapter answers from a synthetic record set
 using the store's own wire types so the gate exercises the real parsing and the real fail-closed
 rules rather than a kinder second implementation of them.

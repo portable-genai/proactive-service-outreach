@@ -10,7 +10,7 @@ citations attached.
 
 ## Where does consent actually live?
 
-Inside Mkt6, the marketing compliance and brand governance system, which already models consent
+Inside `marketing-compliance-gate`, the marketing compliance and brand governance system, which already models consent
 as a rule and owns the rule engine a denial cites. This service holds NO copy of anybody's
 consent on any profile. It asks, through `consent-preference-kit`, and on the managed profile an
 unset store URL refuses rather than falling back to anything. A second store would be a second
@@ -47,7 +47,7 @@ flat sentence it replaced.
 ## Which decisions never happen automatically?
 
 Whatever the policy marks `consequential`. In the shipped set that is a fraud hold and an
-outage: both are drafted, HELD and routed to the Hrz7 human-review console with the proposed
+outage: both are drafted, HELD and routed to the `human-review-console` with the proposed
 words attached, because a reviewer who cannot see the sentence cannot meaningfully approve it.
 In this vertical "held" means the message did not go out, and the API, CLI, agent and contract
 suites all assert the delivery did not happen rather than only that the flag was set.
