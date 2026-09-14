@@ -24,6 +24,7 @@
 # (naming.tf derives the ring and key names from it).
 
 resource "google_kms_key_ring" "outreach" {
+  count    = var.cmek_enabled ? 1 : 0
   name     = local.kms_ring_name
   location = var.region # regional, in-country key material (P-03)
 
@@ -31,8 +32,9 @@ resource "google_kms_key_ring" "outreach" {
 }
 
 resource "google_kms_crypto_key" "outreach" {
+  count    = var.cmek_enabled ? 1 : 0
   name     = local.kms_key_name
-  key_ring = google_kms_key_ring.outreach.id
+  key_ring = one(google_kms_key_ring.outreach[*].id)
 
   purpose         = "ENCRYPT_DECRYPT"
   rotation_period = "7776000s" # 90 days
@@ -60,28 +62,32 @@ data "google_project" "this" {
 
 # Vertex AI, for the managed model that phrases a notification body.
 resource "google_kms_crypto_key_iam_member" "aiplatform" {
-  crypto_key_id = google_kms_crypto_key.outreach.id
+  count         = var.cmek_enabled ? 1 : 0
+  crypto_key_id = one(google_kms_crypto_key.outreach[*].id)
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member        = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-aiplatform.iam.gserviceaccount.com"
 }
 
 # Cloud Storage, for the bucket the synthesised voice notification is written to.
 resource "google_kms_crypto_key_iam_member" "storage" {
-  crypto_key_id = google_kms_crypto_key.outreach.id
+  count         = var.cmek_enabled ? 1 : 0
+  crypto_key_id = one(google_kms_crypto_key.outreach[*].id)
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member        = "serviceAccount:service-${data.google_project.this.number}@gs-project-accounts.iam.gserviceaccount.com"
 }
 
 # Cloud Logging, for the locked WORM audit bucket.
 resource "google_kms_crypto_key_iam_member" "logging" {
-  crypto_key_id = google_kms_crypto_key.outreach.id
+  count         = var.cmek_enabled ? 1 : 0
+  crypto_key_id = one(google_kms_crypto_key.outreach[*].id)
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member        = "serviceAccount:service-${data.google_project.this.number}@gcp-sa-logging.iam.gserviceaccount.com"
 }
 
 # Cloud Run, for the serving revision's own encrypted storage.
 resource "google_kms_crypto_key_iam_member" "run" {
-  crypto_key_id = google_kms_crypto_key.outreach.id
+  count         = var.cmek_enabled ? 1 : 0
+  crypto_key_id = one(google_kms_crypto_key.outreach[*].id)
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member        = "serviceAccount:service-${data.google_project.this.number}@serverless-robot-prod.iam.gserviceaccount.com"
 }
