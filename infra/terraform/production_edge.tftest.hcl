@@ -17,6 +17,7 @@ run "residency_defaults_are_in_country" {
   command = plan
 
   variables {
+    cmek_enabled  = true
     project_id    = "fictional-outreach-sg"
     enable_vpc_sc = false
   }
@@ -27,7 +28,7 @@ run "residency_defaults_are_in_country" {
   }
 
   assert {
-    condition     = google_kms_key_ring.outreach.location == var.region
+    condition     = google_kms_key_ring.outreach[0].location == var.region
     error_message = "CMEK key material must be regional and in the deployment region, never a multi-region ring."
   }
 
@@ -131,6 +132,7 @@ run "serving_edge_contract" {
   }
 
   variables {
+    cmek_enabled                = true
     project_id                  = "fictional-outreach-sg"
     enable_vpc_sc               = false
     production_edge_enabled     = true
@@ -159,7 +161,7 @@ run "serving_edge_contract" {
   }
 
   assert {
-    condition     = google_cloud_run_v2_service.api[0].template[0].encryption_key == google_kms_crypto_key.outreach.id
+    condition     = google_cloud_run_v2_service.api[0].template[0].encryption_key == google_kms_crypto_key.outreach[0].id
     error_message = "The revision must be bound to the regional CMEK: encryption does not cascade."
   }
 
