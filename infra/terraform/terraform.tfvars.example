@@ -78,12 +78,15 @@ production_edge_enabled = false
 # dns_managed_zone = "fictional-bank-example"
 
 # REQUIRED when the edge is enabled, and each for its own reason:
-#   human_review_url  rule R8: the managed router refuses rather than swallowing an
-#                     escalation, and a fraud hold is never delivered without a human.
+#   human_review_url  rule R8: with routing on the service refuses to boot without a
+#                     console, and a fraud hold is never delivered without a human.
 #   consent_store_url P-13: there is no second copy of anybody's consent anywhere in
 #                     this service, so an unnamed store refuses EVERY contact.
 # human_review_url  = "https://review.fictional-bank.example"
 # consent_store_url = "https://consent.fictional-bank.example"
+
+# Cheap runtime control, on in the reference; false runs without routing and needs no console.
+review_routing_enabled = true
 
 # Optional runtime wiring. Leave a variable out entirely rather than setting it to an
 # empty string: this service reads its environment in three states, and an emptied

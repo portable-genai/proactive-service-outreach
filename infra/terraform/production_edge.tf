@@ -18,8 +18,9 @@
 #
 # Two runtime variables are REQUIRED here and the rest are not, and the line between them is
 # "does the service still do its job without it":
-#   - HUMAN_REVIEW_URL (rule R8) and MKT_CONSENT_STORE_URL (P-13) are required, because
-#     without the first an escalation has nowhere to go and without the second every single
+#   - HUMAN_REVIEW_URL (rule R8, unless review_routing_enabled is false) and
+#     MKT_CONSENT_STORE_URL (P-13) are required, because without the first an escalation has
+#     nowhere to go and without the second every single
 #     contact is refused with consent_unknown. Both are refused at plan time (variables.tf).
 #   - OUTREACH_CHAT_AGENT, OUTREACH_DRAFTING_MODEL and OUTREACH_SPEECH_VOICE are not, because
 #     each has a documented, per-contact, fail-safe degradation: no drafter means the
@@ -146,10 +147,16 @@ resource "google_cloud_run_v2_service" "api" {
         value = var.region
       }
       # Rule R8: the console an escalation is routed to. Required whenever the edge is enabled
-      # (variables.tf), because the managed router refuses rather than swallowing one.
+      # with routing on (variables.tf), because the service refuses to boot without one.
       env {
         name  = "HUMAN_REVIEW_URL"
         value = var.human_review_url
+      }
+      # The review-routing switch, stated rather than inherited: a cheap runtime control, on in
+      # the reference. Off is a deployment choice the service logs at startup.
+      env {
+        name  = "OUTREACH_REVIEW_ROUTING"
+        value = tostring(var.review_routing_enabled)
       }
       # P-13: the consent authority. Also required, because there is no second copy of anybody's
       # consent anywhere in this service and an unnamed store refuses every contact.

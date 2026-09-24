@@ -67,6 +67,7 @@ from hex_service_kit.web import (
     make_require_service_caller,
 )
 
+from ..adapters.controls import RecordingReviewRouter
 from ..config import (
     LOCAL_PROFILE,
     Container,
@@ -352,12 +353,13 @@ def evaluate(
         attributes=dict(request.attributes),
     )
     result = _service(container).evaluate(event, actor=principal.actor)
-    review_ref = ""
-    if result.requires_human_review:
-        review_ref = container.review_router.route(
-            result, maker=principal.actor, tenant=principal.tenant
-        )
-    return OutreachResponse.from_domain(result, review_ref=review_ref)
+    # The hand-off never fails an already-evaluated, already-audited decision; the response
+    # says what happened to it instead (the fleet's runtime-control contract).
+    routing = RecordingReviewRouter(container.review_router)
+    review_ref = routing.route(result, maker=principal.actor, tenant=principal.tenant)
+    return OutreachResponse.from_domain(
+        result, review_ref=review_ref, review_routing=routing.outcome.value
+    )
 
 
 @app.post("/v1/outreach/sweep", response_model=list[OutreachResponse], tags=["artifacts"])
@@ -381,12 +383,14 @@ def sweep(
         ) from exc
     responses: list[OutreachResponse] = []
     for result in results:
-        review_ref = ""
-        if result.requires_human_review:
-            review_ref = container.review_router.route(
-                result, maker=principal.actor, tenant=principal.tenant
+        # One recorder per result, so each response says what happened to ITS hand-off.
+        routing = RecordingReviewRouter(container.review_router)
+        review_ref = routing.route(result, maker=principal.actor, tenant=principal.tenant)
+        responses.append(
+            OutreachResponse.from_domain(
+                result, review_ref=review_ref, review_routing=routing.outcome.value
             )
-        responses.append(OutreachResponse.from_domain(result, review_ref=review_ref))
+        )
     return responses
 
 

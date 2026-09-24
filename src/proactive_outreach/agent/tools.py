@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING, Any
 from hex_service_kit.serialization import to_jsonable
 from pii_kit import redact
 
+from ..adapters.controls import RecordingReviewRouter
 from ..config import Container, Settings, build_container
 from ..domain.models import EventQuery, EventType, ServiceEvent
 from ..domain.outreach_service import OutreachService
@@ -109,7 +110,8 @@ def evaluate_service_event(
 
     Returns:
       A JSON-safe result dict with every string masked for personal data, plus ``review_ref``:
-      where the escalation WENT. It is empty only when the result did not escalate.
+      where the escalation WENT, and ``review_routing``: routed, failed, off or not_required.
+      The reference is empty unless the hand-off was routed.
     """
     container = _container(settings)
     event = ServiceEvent(
@@ -125,15 +127,15 @@ def evaluate_service_event(
         attributes=dict(attributes or {}),
     )
     result = _service(container).evaluate(event, actor=actor)
-    review_ref = ""
-    if result.requires_human_review:
-        review_ref = container.review_router.route(result, maker=actor, tenant=tenant)
+    routing = RecordingReviewRouter(container.review_router)
+    review_ref = routing.route(result, maker=actor, tenant=tenant)
     payload = _redacted(to_jsonable(result))
     if not isinstance(payload, dict):  # pragma: no cover - dataclasses serialise to objects
         raise TypeError("an outreach result must serialise to a JSON object")
     # Attached after the redaction pass: it is a routing reference, not narrative text, and
     # masking an identifier would break the caller's ability to look the review up.
     payload["review_ref"] = review_ref
+    payload["review_routing"] = routing.outcome.value
     return payload
 
 
@@ -158,7 +160,8 @@ def sweep_service_events(
 
     Returns:
       A JSON-safe dict with ``results`` (one masked result per event, each carrying its own
-      ``review_ref``) and the counts a caller usually wants: evaluated, delivered, held.
+      ``review_ref`` and ``review_routing``) and the counts a caller usually wants: evaluated,
+      delivered, held.
     """
     container = _container(settings)
     query = EventQuery(tenant=tenant or container.settings.tenant, since=since, limit=limit)
@@ -167,14 +170,14 @@ def sweep_service_events(
     held = 0
     delivered = 0
     for result in results:
-        review_ref = ""
-        if result.requires_human_review:
-            held += 1
-            review_ref = container.review_router.route(result, maker=actor, tenant=query.tenant)
+        held += 1 if result.requires_human_review else 0
+        routing = RecordingReviewRouter(container.review_router)
+        review_ref = routing.route(result, maker=actor, tenant=query.tenant)
         delivered += 1 if result.delivered else 0
         payload = _redacted(to_jsonable(result))
         if isinstance(payload, dict):
             payload["review_ref"] = review_ref
+            payload["review_routing"] = routing.outcome.value
         payloads.append(payload)
     return {
         "results": payloads,

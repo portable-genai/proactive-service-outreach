@@ -84,9 +84,10 @@ place (`domain/outreach_service.py`) and every surface goes through it.
   (`fraud_hold` and `outage` in the shipped set) sets `requires_human_review=True`, is NOT
   delivered, and is routed through `ReviewRouterPort` to the `human-review-console` in the same request,
   with the proposed words attached so the reviewer can approve the sentence. A discarded draft
-  does the same. The flag alone is not the escalation. The response carries `review_ref`, so a
-  caller can tell a routed escalation from one that stopped here. The managed adapter refuses to
-  run with no console configured rather than swallowing the escalation.
+  does the same. The flag alone is not the escalation. The response carries `review_ref` and
+  `review_routing` (`routed`, `failed`, `off` or `not_required`), so a caller can tell a routed
+  escalation from one that stopped here. Under the managed profile, routing on with no console
+  configured refuses at boot; `OUTREACH_REVIEW_ROUTING=off` is the stated way to run without it.
 - **Profile**: resolved ONCE, at import, into a `ProfileChoice` and never a bare string. Three
   states of `OUTREACH_PROFILE`: UNSET is NO CHOICE (the SDK-free adapters
   still bind, but the seeded personas are refused, no service-to-service scheme is selected, every
