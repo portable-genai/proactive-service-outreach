@@ -309,6 +309,27 @@ run "reject_mutable_api_image" {
   expect_failures = [var.api_image]
 }
 
+run "edge_with_routing_stated_off_needs_no_console" {
+  command = plan
+
+  variables {
+    project_id                  = "fictional-outreach-sg"
+    enable_vpc_sc               = false
+    production_edge_enabled     = true
+    api_image                   = "asia-southeast1-docker.pkg.dev/fictional-outreach-sg/outreach/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    service_domain              = "outreach.fictional-bank.example"
+    human_review_url            = ""
+    review_routing_enabled      = false
+    consent_store_url           = "https://consent.fictional-bank.example"
+    alert_notification_channels = ["projects/fictional-outreach-sg/notificationChannels/123"]
+  }
+
+  assert {
+    condition     = one([for item in google_cloud_run_v2_service.api[0].template[0].containers[0].env : item.value if item.name == "OUTREACH_REVIEW_ROUTING"]) == "false"
+    error_message = "a deployment that switches routing off must tell the service so, not leave it to infer from a missing console"
+  }
+}
+
 run "reject_edge_with_no_review_console" {
   command = plan
 

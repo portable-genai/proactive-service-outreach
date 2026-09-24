@@ -9,6 +9,8 @@ every later question ("why did this person get three of these?") a log-archaeolo
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel
 
 from ..domain.models import (
@@ -160,17 +162,20 @@ class OutreachResponse(BaseModel):
     delivery_ref: str = ""
     draft_discarded: bool = False
     #: Where the escalation WENT (rule R8): the human-review-console review id, or the local queue
-    #: reference.
-    #: Empty only when the result did not escalate. A caller can tell a routed escalation from
-    #: a flag that stopped here, which is the whole point of the rule.
+    #: reference. Empty exactly when ``review_routing`` is not ``routed``.
     review_ref: str = ""
+    #: What happened to the hand-off: routed, failed, off or not_required. ``failed`` means the
+    #: held outreach is NOT queued for review, and the console says so.
+    review_routing: Literal["routed", "failed", "off", "not_required"] = "not_required"
     trigger: TriggerModel | None = None
     eligibility: EligibilityModel | None = None
     message: MessageModel | None = None
     citations: list[CitationModel] = []
 
     @classmethod
-    def from_domain(cls, result: OutreachResult, *, review_ref: str = "") -> OutreachResponse:
+    def from_domain(
+        cls, result: OutreachResult, *, review_ref: str = "", review_routing: str = "not_required"
+    ) -> OutreachResponse:
         return cls(
             case_ref=result.case_ref,
             event_id=result.event_id,
@@ -183,6 +188,7 @@ class OutreachResponse(BaseModel):
             delivery_ref=result.delivery_ref,
             draft_discarded=result.draft_discarded,
             review_ref=review_ref,
+            review_routing=review_routing,  # type: ignore[arg-type]
             trigger=TriggerModel.from_domain(result.trigger) if result.trigger else None,
             eligibility=(
                 EligibilityModel.from_domain(result.eligibility) if result.eligibility else None
