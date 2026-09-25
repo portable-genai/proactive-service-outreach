@@ -12,9 +12,17 @@ therefore has no repair logic and no retry-with-a-nicer-prompt loop: both would 
 deciding what the customer is told.
 
 The ``google.genai`` import is lazy, so the offline profiles import this module with no SDK.
+
+Sampling is left FREE: the call sends no ``temperature`` at all, because this is drafting, not
+extraction or scoring, and some models reject the parameter outright. Reproducibility is not
+this adapter's job; the validator downstream decides what may be sent. After the call returns,
+the adapter notes the model it called (``hex_service_kit.provenance``), which is what the
+console's model pill names. No search tool is attached, so it never notes a search.
 """
 
 from __future__ import annotations
+
+from hex_service_kit import provenance
 
 from ...config import Settings
 from ...domain.models import DraftRequest
@@ -57,4 +65,5 @@ class VertexDraftingAdapter:
             f"facts:\n{facts}\n"
         )
         response = client.models.generate_content(model=model, contents=prompt)
+        provenance.note_model(model)
         return str(getattr(response, "text", "") or "")
