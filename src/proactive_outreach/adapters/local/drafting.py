@@ -15,13 +15,19 @@ Two things it deliberately is NOT:
 
 The metric that judges the validator therefore scores it against an INDEPENDENTLY labelled set
 of candidate drafts in ``eval/datasets/``, not against this adapter's output.
+
+It does NOTE itself as what answered (:data:`~...config.OFFLINE_STUB_MODEL`, the same string
+``generator_model`` reports under ``local``), so the console's model pill names the stub rather
+than naming nothing or a model that never ran. It never notes a search: it does not go online.
 """
 
 from __future__ import annotations
 
 import json
 
-from ...config import Settings
+from hex_service_kit import provenance
+
+from ...config import OFFLINE_STUB_MODEL, Settings
 from ...domain.drafting import render_template
 from ...domain.models import DraftRequest
 from ...ports.drafting import DraftingUnavailableError
@@ -40,4 +46,5 @@ class TemplateDraftingAdapter:
                 f"no template is configured for {request.template_id!r}, so there is no "
                 "deterministic body to fall back on and nothing may be improvised"
             )
+        provenance.note_model(OFFLINE_STUB_MODEL)
         return json.dumps({"body": message.body}, sort_keys=True)

@@ -1,18 +1,23 @@
-"""The provenance the UI banner states must be true of the profile the service is running.
+"""What the console's model pill states before any answer must be true of the running profile.
 
-Every served console names, at the top of every page, WHERE it is running and WHICH model
-answers (org decision, 2026-08-30). Both halves come from ``/healthz`` because the browser
-cannot know either: a console that read its runtime from ``window.location`` would be right
-until the day the deployment served through a proxy, and wrong silently after that.
+Every served console shows two small pills at the top right (owner decision, 2026-09-23;
+they replaced the full-width provenance banner): the model that ANSWERED the last request, and
+``Search`` when that answer used an online search tool. Until a request is answered, the model
+pill shows ``generator_model`` from ``/healthz``, dimmed, with WHERE the runtime sits in its
+title. Both values come from the service because the browser cannot know either: a console that
+read its runtime from ``window.location`` would be right until the day the deployment served
+through a proxy, and wrong silently after that.
 
-The reason this is worth a test rather than a glance is what the banner is FOR. These systems
+The reason this is worth a test rather than a glance is what the pill is FOR. These systems
 are demonstrated on a laptop and on a deployment, sometimes in the same hour, and a screenshot
-of one is indistinguishable from the other. A banner that was merely present but wrong is worse
-than no banner: it converts "the viewer does not know" into "the viewer has been told the wrong
+of one is indistinguishable from the other. A pill that was merely present but wrong is worse
+than no pill: it converts "the viewer does not know" into "the viewer has been told the wrong
 thing", and the wrong thing here is whether a figure came from a managed model or from a
 deterministic offline stub.
 
-So the assertions below are about AGREEMENT with the profile, not about presence.
+So the assertions below are about AGREEMENT with the profile, not about presence. The answered
+half (``X-Answered-By`` / ``X-Search-Used``) is proved in ``test_answer_provenance.py``, and the
+UI half (component, fetch wrapper, proxy forwarding) in ``test_ui_surface.py``.
 """
 
 from __future__ import annotations
@@ -22,7 +27,7 @@ from pathlib import Path
 
 import pytest
 
-from proactive_outreach.config import Settings
+from proactive_outreach.config import OFFLINE_STUB_MODEL, Settings
 
 CONFIG_PATH = Path("config/settings.yaml")
 
@@ -33,7 +38,7 @@ CONFIG_PATH = Path("config/settings.yaml")
 #: exists and refuses. A reviewer approving an escalation is entitled to know which they read.
 _NON_MANAGED_ANSWERS = frozenset(
     {
-        "deterministic-offline-stub",
+        OFFLINE_STUB_MODEL,
         "no-model",
         "onprem-not-implemented",
         "managed-model-unavailable",
@@ -59,7 +64,7 @@ def test_the_runtime_half_states_where_the_process_runs(profile: str) -> None:
 
 @pytest.mark.parametrize("profile", ["local", "gcp", "onprem"])
 def test_the_model_half_is_always_answered(profile: str) -> None:
-    """A blank is not an option: the banner renders nothing rather than render a falsehood."""
+    """A blank is not an option: the pill renders nothing rather than render a falsehood."""
     assert _for_profile(profile).generator_model.strip()
 
 
@@ -67,7 +72,7 @@ def test_the_model_half_is_always_answered(profile: str) -> None:
 def test_no_offline_profile_claims_a_managed_model(profile: str) -> None:
     """The defect that matters, stated as an assertion.
 
-    A laptop run naming a Gemini model is precisely the confusion the banner exists to remove,
+    A laptop run naming a Gemini model is precisely the confusion the pill exists to remove,
     and it is the one direction a reviewer cannot detect by looking at the page.
     """
     answer = _for_profile(profile).generator_model
@@ -94,7 +99,7 @@ def test_the_health_contract_carries_both_halves() -> None:
 
 
 def test_the_endpoint_answers_from_settings_rather_than_a_literal() -> None:
-    """A banner hard-coded at the endpoint would be right once and wrong after the next rebind.
+    """A pill value hard-coded at the endpoint would be right once and wrong after the next rebind.
 
     Both halves are properties of :class:`Settings`, so the values the endpoint sends are the
     values the profile implies; this pins that they are readable and non-empty together, which
@@ -153,3 +158,16 @@ def test_not_implemented_is_claimed_only_by_an_adapter_that_never_calls_a_model(
             f"{binding} reports managed-not-implemented but calls {call!r}: it generates, so "
             "the model it calls must be named rather than declared absent"
         )
+
+
+def test_the_local_pill_names_the_stub_the_offline_drafter_notes() -> None:
+    """Configured and answered must agree under ``local``: one constant, read by both.
+
+    Before an answer the pill shows ``generator_model``; once the offline template drafter has
+    answered, it shows what that drafter noted. Two spellings of the stub name would make the
+    pill change its wording on the first answer with nothing having changed.
+    """
+    from proactive_outreach.adapters.local import drafting as local_drafting
+
+    assert _for_profile("local").generator_model == OFFLINE_STUB_MODEL
+    assert local_drafting.OFFLINE_STUB_MODEL is OFFLINE_STUB_MODEL
