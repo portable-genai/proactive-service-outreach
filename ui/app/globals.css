@@ -113,7 +113,10 @@ footer {
 /* The model pills: which model answered the last request, and Search when it searched.
    Fixed at the top right, inside body's top padding, so they stay in view without covering any
    page's own controls. Each pill carries its own opaque background, so it reads over whatever
-   scrolls beneath it, in either colour scheme. */
+   scrolls beneath it, in either colour scheme. There is deliberately no dark-scheme override:
+   this page stays light in either colour scheme, and pills inverted for a dark page would show
+   the configured pill solid and the answered one faint on this light one, reversing what the two
+   styles mean. */
 .model-pills {
   position: fixed;
   top: 6px;
@@ -153,18 +156,4 @@ footer {
   background: var(--ok);
   border-color: var(--ok);
   color: #fff;
-}
-
-@media (prefers-color-scheme: dark) {
-  .model-pill.configured {
-    background: var(--ink-900);
-    border-color: var(--ink-500);
-    color: var(--ink-200);
-  }
-
-  .model-pill.answered {
-    background: var(--ink-100);
-    border-color: var(--ink-100);
-    color: var(--ink-900);
-  }
 }
