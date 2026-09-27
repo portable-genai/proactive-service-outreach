@@ -21,6 +21,7 @@ locals {
   required_services = [
     # Called by a bound adapter (src/proactive_outreach/adapters/gcp/).
     "aiplatform.googleapis.com",   # drafting.py (a model phrases; it decides nothing)
+    "modelarmor.googleapis.com",   # guardrail.py (screens the drafting call, rule R1)
     "texttospeech.googleapis.com", # speech.py (the voice channel)
     "dialogflow.googleapis.com",   # delivery.py (the CX conversation channel)
     "bigquery.googleapis.com",     # events.py (the client-owned event view)

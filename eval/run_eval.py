@@ -49,6 +49,9 @@ from proactive_outreach.adapters.local.delivery import (
 from proactive_outreach.adapters.local.drafting import (
     TemplateDraftingAdapter,
 )
+from proactive_outreach.adapters.local.guardrail import (
+    LocalHeuristicGuardrailAdapter,
+)
 from proactive_outreach.adapters.local.speech import (
     FixtureSpeechSynthesis,
 )
@@ -133,6 +136,7 @@ def run_case(case: dict[str, Any]) -> Evaluated:
         delivery=LocalChatDelivery(settings),
         speech=FixtureSpeechSynthesis(settings),
         tracer=LocalNoopTracerAdapter(settings),
+        guardrail=LocalHeuristicGuardrailAdapter(settings),
         policy=settings.policy,
     )
     event = ServiceEvent(

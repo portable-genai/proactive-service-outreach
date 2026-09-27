@@ -7,14 +7,14 @@
 #         bucket for the length of the retention window.
 #
 # Every filter below names a field this deployment actually emits. The managed audit adapter
-# writes the AuditEvent as a struct payload, so jsonPayload.decision is "allowed" or
-# "escalated" (domain/kernel.py Decision), jsonPayload.severity carries the band, and
+# writes the AuditEvent as a struct payload, so jsonPayload.decision is "allowed", "escalated"
+# or "blocked" (domain/kernel.py Decision), jsonPayload.severity carries the band, and
 # jsonPayload.redacted_summary carries the sentence domain/outreach_service.py built, which
 # quotes the eligibility engine's own reason TOKENS (domain/eligibility.py). Those tokens are a
 # published vocabulary that the eval oracle and the demo already assert against, so a filter
 # that matches one is matching a contract rather than a wording.
 #
-# Three of the eight are this vertical's own, and they exist because this service sends
+# Four of the nine are this vertical's own, and they exist because this service sends
 # outbound contact and its interesting failure is SILENCE:
 #   - consent_unavailable : a contact was refused with consent_unknown, which is what the
 #     eligibility engine returns when the marketing-compliance-gate store gave no usable answer at all. Refusing is
@@ -28,16 +28,18 @@
 #   - draft_discarded : the validator refused what the model wrote (an invented figure, a
 #     banned phrase, personal data, over-length, malformed output). One is a working control;
 #     a rate of them is a model or prompt regression, and each one costs a human a review.
+#   - guardrail_blocks : the guardrail refused the drafting call (rule R1), on the prompt or on
+#     the model's answer, or could not decide at all (Model Armor unreachable or timed out,
+#     which fails closed). domain/outreach_service.py records each refusal as its own
+#     decision="blocked" audit entry, without the refused text. One is the control working; a
+#     burst is an injection campaign arriving through event attributes, and a steady rate with
+#     "guardrail unavailable" in the summary is Model Armor down while every draft goes to a
+#     human.
 #
 # There is deliberately NO frequency_cap_exceeded alert. A cap that refuses a fourth message in
 # a day is the product working exactly as specified, many times a day, and an alert that fires
 # on the intended outcome trains an operator to ignore the channel. The cap is proved by
 # `frequency_cap_exactness >= 1.0` in the eval, which is where an arithmetic claim belongs.
-#
-# There is likewise no guardrail-block metric. The reference stack alerts on one because it
-# binds a guardrail port; this service has none (COMPLIANCE rule R1 records that as owed), and
-# a metric whose filter can never match is a green light nobody earned. Add it in the same
-# commit that binds the guardrail.
 #
 # Alert policies are always created; var.alert_notification_channels attaches the channels.
 
@@ -60,6 +62,10 @@ locals {
     draft_discarded = {
       description = "A model draft was discarded by the validator, so a human now has to approve the words"
       filter      = "${local.audit_log_filter} AND jsonPayload.redacted_summary:\"draft discarded\""
+    }
+    guardrail_blocks = {
+      description = "The guardrail refused the drafting call (rule R1), or could not decide and failed closed"
+      filter      = "${local.audit_log_filter} AND jsonPayload.decision=\"blocked\""
     }
     sa_key_creation = {
       description = "Service-account key created (org policy should forbid this)"

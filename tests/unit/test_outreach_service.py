@@ -34,22 +34,22 @@ class SpyDrafter:
         self._inner = inner
         self.calls: list[DraftRequest] = []
 
-    def draft(self, request: DraftRequest) -> str:
+    def draft(self, request: DraftRequest, *, prompt: str) -> str:
         self.calls.append(request)
-        return str(self._inner.draft(request))  # type: ignore[attr-defined]
+        return str(self._inner.draft(request, prompt=prompt))  # type: ignore[attr-defined]
 
 
 class BadDrafter:
     """A drafter that returns something the validator must reject."""
 
-    def draft(self, request: DraftRequest) -> str:
+    def draft(self, request: DraftRequest, *, prompt: str) -> str:
         return '{"body": "Your card was declined for 4,995 dollars. Call us."}'
 
 
 class BrokenDrafter:
     """A drafter that is simply not there."""
 
-    def draft(self, request: DraftRequest) -> str:
+    def draft(self, request: DraftRequest, *, prompt: str) -> str:
         raise DraftingUnavailableError("no drafter is configured")
 
 
@@ -61,6 +61,7 @@ def _service(container: Container, **ports: object) -> OutreachService:
         delivery=ports.get("delivery", container.delivery),  # type: ignore[arg-type]
         speech=ports.get("speech", container.speech),  # type: ignore[arg-type]
         tracer=container.tracer,
+        guardrail=ports.get("guardrail", container.guardrail),  # type: ignore[arg-type]
         events=container.events,
         policy=container.settings.policy,
     )
@@ -247,6 +248,7 @@ def test_a_sweep_needs_an_event_port_and_says_so_rather_than_returning_nothing()
         delivery=container.delivery,
         speech=container.speech,
         tracer=container.tracer,
+        guardrail=container.guardrail,
         policy=container.settings.policy,
     )
     with pytest.raises(RuntimeError):

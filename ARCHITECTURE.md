@@ -22,7 +22,8 @@ block API startup and Terraform serving authorization until its integration test
   `eligibility.py`, `drafting.py` (three pure engines, each with an explicit `as_of` and no
   clock), and `outreach_service.py`, which owns only the ORDER and the ports.
 - `ports/` : `@runtime_checkable` Protocols (`AuditSinkPort`, `ReviewRouterPort`,
-  `EventDetectionPort`, `ConsentPort`, `DraftingPort`, `MessageDeliveryPort`; identity uses the
+  `EventDetectionPort`, `ConsentPort`, `DraftingPort`, `GuardrailPort`, `MessageDeliveryPort`,
+  plus the observability pair; identity uses the
   commons `IdentityPort` and text-to-speech uses `speech-lexicon-kit`'s `TextToSpeechPort`),
   re-exported once with the `PORT_PROTOCOLS` map. `identity.py` adds
   this service's own identity vocabulary: what an adapter DECLARES about the end-user
@@ -95,6 +96,7 @@ thing replayable; no surface lets its caller choose it, because quiet hours turn
 | `ConsentPort` | synthetic record set, same wire types | `marketing-compliance-gate` consent store over S2S (stdlib) | placeholder |
 | `DraftingPort` | deterministic template in the drafter's envelope | managed model (lazy) | placeholder |
 | `EventDetectionPort` | fixture events, stable order | client-owned warehouse view (lazy) | placeholder |
+| `GuardrailPort` | deterministic injection/jailbreak heuristic | regional Model Armor template (lazy), fail closed | placeholder |
 | `IdentityPort` | seeded personas (commons) | IAP assertion (lazy) | placeholder |
 | `MessageDeliveryPort` | in-process chat outbox with the envelope | conversation platform (lazy) | placeholder |
 | `ReviewRouterPort` | review-kit outbox (offline, inspectable) | `human-review-console` service intake over S2S | placeholder |

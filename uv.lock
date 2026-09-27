@@ -576,6 +576,22 @@ wheels = [
 ]
 
 [[package]]
+name = "google-cloud-modelarmor"
+version = "0.7.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "google-api-core", extra = ["grpc"] },
+    { name = "google-auth" },
+    { name = "grpcio" },
+    { name = "proto-plus" },
+    { name = "protobuf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/73/3f/fd80b55002cf54f2c8b7ba3ff72049d8928afe7dd4849a385a55b4a4c2f7/google_cloud_modelarmor-0.7.1.tar.gz", hash = "sha256:1cc9eabb94c274d99dc4069d505e1ec4f602bea0aba1fb221233e52171897509", size = 167791, upload-time = "2026-07-08T17:03:53.285Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ea/a5/3f212fc5abb3720bbb473d076decee618472421cf46fcf1495ccf24d56a9/google_cloud_modelarmor-0.7.1-py3-none-any.whl", hash = "sha256:90285c3f2dc859413a7ff86d585d1ec30263ec266f45f2cba930cae66a994cc0", size = 143588, upload-time = "2026-07-08T17:03:24.576Z" },
+]
+
+[[package]]
 name = "google-cloud-storage"
 version = "3.15.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1218,6 +1234,7 @@ gcp = [
     { name = "google-cloud-bigquery" },
     { name = "google-cloud-dialogflow-cx" },
     { name = "google-cloud-logging" },
+    { name = "google-cloud-modelarmor" },
     { name = "google-cloud-storage" },
     { name = "google-cloud-texttospeech" },
     { name = "google-genai" },
@@ -1232,6 +1249,7 @@ requires-dist = [
     { name = "google-cloud-bigquery", marker = "extra == 'gcp'", specifier = ">=3.0" },
     { name = "google-cloud-dialogflow-cx", marker = "extra == 'gcp'", specifier = ">=2.0" },
     { name = "google-cloud-logging", marker = "extra == 'gcp'", specifier = ">=3.0" },
+    { name = "google-cloud-modelarmor", marker = "extra == 'gcp'", specifier = ">=0.7" },
     { name = "google-cloud-storage", marker = "extra == 'gcp'", specifier = ">=3.0" },
     { name = "google-cloud-texttospeech", marker = "extra == 'gcp'", specifier = ">=2.0" },
     { name = "google-genai", marker = "extra == 'gcp'", specifier = ">=2.0" },

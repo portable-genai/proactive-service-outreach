@@ -65,6 +65,7 @@ google-api-core==2.39.0
     #   google-cloud-core
     #   google-cloud-dialogflow-cx
     #   google-cloud-logging
+    #   google-cloud-modelarmor
     #   google-cloud-storage
     #   google-cloud-texttospeech
     #   google-cloud-trace
@@ -76,6 +77,7 @@ google-auth==2.58.1
     #   google-cloud-core
     #   google-cloud-dialogflow-cx
     #   google-cloud-logging
+    #   google-cloud-modelarmor
     #   google-cloud-storage
     #   google-cloud-texttospeech
     #   google-cloud-trace
@@ -96,6 +98,8 @@ google-cloud-core==2.7.0
 google-cloud-dialogflow-cx==2.7.0
     # via proactive-service-outreach
 google-cloud-logging==3.16.3
+    # via proactive-service-outreach
+google-cloud-modelarmor==0.7.1
     # via proactive-service-outreach
 google-cloud-storage==3.15.0
     # via proactive-service-outreach
@@ -128,6 +132,7 @@ grpcio==1.84.0
     #   google-cloud-appengine-logging
     #   google-cloud-dialogflow-cx
     #   google-cloud-logging
+    #   google-cloud-modelarmor
     #   google-cloud-texttospeech
     #   google-cloud-trace
     #   googleapis-common-protos
@@ -197,6 +202,7 @@ proto-plus==1.28.4
     #   google-cloud-appengine-logging
     #   google-cloud-dialogflow-cx
     #   google-cloud-logging
+    #   google-cloud-modelarmor
     #   google-cloud-texttospeech
     #   google-cloud-trace
 protobuf==7.36.2
@@ -206,6 +212,7 @@ protobuf==7.36.2
     #   google-cloud-audit-log
     #   google-cloud-dialogflow-cx
     #   google-cloud-logging
+    #   google-cloud-modelarmor
     #   google-cloud-texttospeech
     #   google-cloud-trace
     #   googleapis-common-protos

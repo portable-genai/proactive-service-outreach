@@ -410,6 +410,7 @@ class DemoRun:
             delivery=self.container.delivery,
             speech=self.container.speech,
             tracer=self.container.tracer,
+            guardrail=self.container.guardrail,
             events=self.container.events,
             policy=self.settings.policy,
         )
@@ -640,8 +641,10 @@ class DemoRun:
         trigger = self._trigger(PII_EVENT)
         request = drafting.draft_request_for(trigger, policy=self.settings.policy)
         deterministic = drafting.render_template(request, policy=self.settings.policy)
-        offered = self.container.drafting.draft(request)
-        accepted = drafting.validate_draft(offered, request, policy=self.settings.policy)
+        # Through the service, never the drafter directly: the service screens the prompt before
+        # the drafter is called and its answer before the validator reads it (rule R1).
+        drafted, discarded, reasons = self.service.draft(trigger, actor=ACTOR, as_of=AS_OF)
+        accepted = drafted if not discarded else None
         rejected = drafting.validate_draft(UNGROUNDED_DRAFT, request, policy=self.settings.policy)
         brief = Panel(
             title="What the drafter is given",
@@ -656,12 +659,16 @@ class DemoRun:
         good = Panel(
             title="A grounded draft is accepted",
             rows=(
-                Row("Body", accepted.message.body if accepted.message else "(none)"),
-                Row("Source", accepted.message.source if accepted.message else "(none)"),
-                Row("Verdict", ", ".join(accepted.reasons), "ok"),
+                Row("Body", accepted.body if accepted else "(none)"),
+                Row("Source", accepted.source if accepted else "(none)"),
+                Row("Verdict", ", ".join(reasons), "ok"),
             ),
-            note="Every figure in it appears in the facts above, and both required facts are said.",
-            tone="ok" if accepted.accepted else "bad",
+            note=(
+                "Every figure in it appears in the facts above, and both required facts are said. "
+                "The guardrail screened the prompt before the drafter saw it and the draft before "
+                "this check read it."
+            ),
+            tone="ok" if accepted else "bad",
         )
         bad = Panel(
             title="A draft that invents a figure is DISCARDED",
@@ -683,7 +690,7 @@ class DemoRun:
             tone="ok" if not rejected.accepted else "bad",
         )
         facts = {
-            "accepted": accepted.accepted,
+            "accepted": accepted is not None,
             "rejected": not rejected.accepted,
             "rejection_reasons": list(rejected.reasons),
             "fact_names": sorted(request.facts),
@@ -1222,15 +1229,18 @@ def _exit_consent(container: Any) -> Any:
 
 
 def _exit_drafting(container: Any) -> Any:
-    return container.drafting.draft(
-        models.DraftRequest(
-            template_id="failed_payment_retry",
-            locale="en-SG",
-            channel="chat",
-            facts={"card_suffix": "4242", "retry_on": "2026-08-11"},
-            max_chars=320,
-        )
+    request = models.DraftRequest(
+        template_id="failed_payment_retry",
+        locale="en-SG",
+        channel="chat",
+        facts={"card_suffix": "4242", "retry_on": "2026-08-11"},
+        max_chars=320,
     )
+    return container.drafting.draft(request, prompt=drafting.drafting_prompt(request))
+
+
+def _exit_guardrail(container: Any) -> Any:
+    return container.guardrail.screen("routine service notification text", kernel.Direction.INPUT)
 
 
 def _exit_delivery(container: Any) -> Any:
@@ -1290,6 +1300,7 @@ EXIT_CALLS: dict[str, Callable[[Any], Any]] = {
     "delivery": _exit_delivery,
     "drafting": _exit_drafting,
     "events": _exit_events,
+    "guardrail": _exit_guardrail,
     "identity": _exit_identity,
     "review_router": _exit_review,
     "tracer": _exit_tracer,

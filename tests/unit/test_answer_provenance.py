@@ -28,6 +28,7 @@ from proactive_outreach import config
 from proactive_outreach.adapters.gcp.drafting import VertexDraftingAdapter
 from proactive_outreach.api import app as app_module
 from proactive_outreach.domain import outreach_service as outreach_module
+from proactive_outreach.domain.drafting import drafting_prompt
 from proactive_outreach.domain.models import DraftRequest
 from proactive_outreach.domain.outreach_service import OutreachService
 from proactive_outreach.domain.policy import DEFAULT_POLICY
@@ -98,8 +99,8 @@ class _SearchingDrafter:
     def __init__(self, inner: DraftingPort) -> None:
         self._inner = inner
 
-    def draft(self, request: DraftRequest) -> str:
-        raw = self._inner.draft(request)
+    def draft(self, request: DraftRequest, *, prompt: str) -> str:
+        raw = self._inner.draft(request, prompt=prompt)
         provenance.note_search()
         return raw
 
@@ -161,10 +162,13 @@ def test_the_managed_drafter_notes_the_model_it_called_and_sends_no_temperature(
         facts={"card_suffix": "4242"},
         max_chars=DEFAULT_POLICY.max_body_chars,
     )
+    prompt = drafting_prompt(request)
     with provenance.scope() as record:
-        assert adapter.draft(request) == '{"body": "drafted"}'
+        assert adapter.draft(request, prompt=prompt) == '{"body": "drafted"}'
     assert len(calls) == 1
     assert calls[0]["model"] == "managed-drafting-model"
+    # The screened prompt is what the model reads, exactly as handed over (rule R1).
+    assert calls[0]["contents"] == prompt
     assert "config" not in calls[0] and "temperature" not in calls[0]
     assert record.models == ["managed-drafting-model"]
     assert record.search_used is False

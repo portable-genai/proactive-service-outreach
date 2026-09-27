@@ -119,6 +119,7 @@ def test_an_append_after_truncation_cannot_relaunder_the_anchor(tmp_path: Path) 
         delivery=container.delivery,
         speech=container.speech,
         tracer=container.tracer,
+        guardrail=container.guardrail,
         policy=container.settings.policy,
     )
     with pytest.raises(AuditChainError):

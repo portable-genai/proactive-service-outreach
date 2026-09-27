@@ -39,7 +39,9 @@ class TemplateDraftingAdapter:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
 
-    def draft(self, request: DraftRequest) -> str:
+    def draft(self, request: DraftRequest, *, prompt: str) -> str:
+        # ``prompt`` is unused: this stand-in is not a model, so it reads no prompt at all. The
+        # domain still screened it, and still screens what this returns.
         message = render_template(request, policy=self._settings.policy)
         if message is None:
             raise DraftingUnavailableError(

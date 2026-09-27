@@ -2,8 +2,8 @@
 #
 # Principle map (COMPLIANCE.md):
 #   P-01 / P-03 (hybrid posture and residency): a service perimeter draws a logical boundary
-#         around the sovereignty-critical APIs (Vertex AI, Text-to-Speech, Dialogflow,
-#         BigQuery, Logging, KMS, Secret Manager, Storage). The operational events a decision
+#         around the sovereignty-critical APIs (Vertex AI, Model Armor, Text-to-Speech,
+#         Dialogflow, BigQuery, Logging, KMS, Secret Manager, Storage). The operational events a decision
 #         is made from, the synthesised audio a customer hears and the audit trail of who was
 #         and was not contacted cannot be read across that boundary into an
 #         out-of-jurisdiction project, which is what stops subject data leaving the country
@@ -31,6 +31,7 @@
 locals {
   perimeter_restricted_services = [
     "aiplatform.googleapis.com",
+    "modelarmor.googleapis.com",
     "texttospeech.googleapis.com",
     "dialogflow.googleapis.com",
     "bigquery.googleapis.com",

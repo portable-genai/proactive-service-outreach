@@ -12,6 +12,7 @@
 # refused at plan time rather than reaching an apply.
 
 mock_provider "google" {}
+mock_provider "google-beta" {}
 
 
 # worm_locked has NO DEFAULT (variables.tf): the audit bucket's lock is irreversible, so a plan
@@ -458,5 +459,43 @@ run "an_unlocked_stack_is_created_unlocked" {
   assert {
     condition     = !google_logging_project_bucket_config.worm_audit.locked
     error_message = "worm_locked = false must leave the bucket UNLOCKED and the stack destroyable."
+  }
+}
+
+# Rule R1: the guardrail template lives in the deployment region, the runtime identity may use it
+# to sanitize and nothing more, and the regional capabilities are declined only when stated.
+run "guardrail_template_is_regional_and_narrows_only_when_stated" {
+  command = plan
+
+  variables {
+    cmek_enabled                  = false
+    project_id                    = "fictional-outreach-sg"
+    enable_vpc_sc                 = false
+    model_armor_full_capabilities = false
+  }
+
+  assert {
+    condition     = google_model_armor_template.guardrail.location == var.region
+    error_message = "The Model Armor template must be created in the deployment region, never global (P-05)."
+  }
+
+  assert {
+    condition     = google_model_armor_template.guardrail.template_id == "outreach-guardrail"
+    error_message = "The default template id must stay config/settings.yaml's model_armor.template_id default."
+  }
+
+  assert {
+    condition     = length(google_model_armor_template.guardrail.filter_config[0].malicious_uri_filter_settings) == 0
+    error_message = "model_armor_full_capabilities = false must decline the malicious-URI filter."
+  }
+
+  assert {
+    condition     = google_model_armor_template.guardrail.template_metadata[0].ignore_partial_invocation_failures == false
+    error_message = "A screen where filters were skipped must never be reported as complete."
+  }
+
+  assert {
+    condition     = google_project_iam_member.app["roles/modelarmor.user"].role == "roles/modelarmor.user"
+    error_message = "The runtime identity needs roles/modelarmor.user to sanitize, and no broader Model Armor grant."
   }
 }

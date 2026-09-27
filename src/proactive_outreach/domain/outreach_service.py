@@ -27,6 +27,16 @@ answered yes:
    with extra steps. 5. **The send is recorded back to the consent store.** A frequency cap counts
    recorded sends and nothing else, so a consumer that decides but never records passes every cap
    forever.
+
+Rule R1: the guardrail screens BOTH directions of the one generation call this service makes,
+the drafter (:meth:`OutreachService.draft`, wrapping ``ports/drafting.py``). INPUT, before the
+model is called at all: the whole prompt the drafter sends, rendered from the closed brief by
+:func:`.drafting.drafting_prompt` and handed to the drafter exactly as the screen returned it.
+OUTPUT: the drafter's raw text, before the validator reads it. Drafting is optional by design,
+since the deterministic body always exists, so a refusal here (a block, or a guardrail that could
+not decide) drops the draft like any other drafting failure: it is audited ``Decision.BLOCKED``,
+the deterministic body is prepared for a HUMAN, ``requires_human_review`` is set, and nothing is
+delivered. A refused draft is never repaired, never partly kept and never sent.
 """
 
 from __future__ import annotations
@@ -46,12 +56,13 @@ from ..ports.consent import (
 from ..ports.delivery import MessageDeliveryPort
 from ..ports.drafting import DraftingPort, DraftingUnavailableError
 from ..ports.events import EventDetectionPort
+from ..ports.guardrail import GuardrailPort
 from ..ports.observability import ObservabilityTracerPort
 from ..ports.speech import SpeechSynthesisRequest, SpeechUnavailableError, TextToSpeechPort
 from . import drafting as drafting_rules
 from . import eligibility as eligibility_rules
 from . import trigger_engine
-from .kernel import AuditEvent, Citation, Decision, Severity, utcnow
+from .kernel import AuditEvent, Citation, Decision, Direction, Severity, utcnow
 from .models import (
     DeliveryEnvelope,
     EligibilityDecision,
@@ -82,6 +93,11 @@ _SWEEP_SPAN = "outreach.sweep"
 #: One span per evaluated event, nested inside the sweep's span when a sweep produced it.
 _EVALUATE_SPAN = "outreach.evaluate"
 
+#: The discard reason a guardrail refusal of the drafting call carries, suffixed with the
+#: direction (``input`` or ``output``). Never the refused text and never the guardrail's reason:
+#: this string reaches the result and the audit summary, and the BLOCKED record holds the why.
+REASON_GUARDRAIL_BLOCKED = "draft_guardrail_blocked"
+
 
 class OutreachService:
     """Turn one detected event into a delivered message, a refusal, or a review."""
@@ -95,6 +111,7 @@ class OutreachService:
         delivery: MessageDeliveryPort,
         speech: TextToSpeechPort,
         tracer: ObservabilityTracerPort,
+        guardrail: GuardrailPort,
         events: EventDetectionPort | None = None,
         policy: OutreachPolicy | None = None,
     ) -> None:
@@ -108,6 +125,9 @@ class OutreachService:
         # traced because the exporter was bound. A surface that forgets the tracer fails to
         # construct instead, which is a failure somebody sees.
         self._tracer = tracer
+        # REQUIRED for the same reason as the tracer: a default that allowed everything would let
+        # a new surface construct a service whose drafting call nobody screens (rule R1).
+        self._guardrail = guardrail
         self._events = events
         self.policy = policy or DEFAULT_POLICY
 
@@ -182,7 +202,9 @@ class OutreachService:
             draft_discarded = False
             draft_reasons: tuple[str, ...] = ()
             if verdict.eligible:
-                message, draft_discarded, draft_reasons = self._draft(trigger)
+                message, draft_discarded, draft_reasons = self.draft(
+                    trigger, actor=actor, as_of=moment
+                )
 
             requires_review = (trigger.fired and trigger.consequential) or draft_discarded
             delivered = False
@@ -254,24 +276,107 @@ class OutreachService:
         except ConsentUnavailableError:
             return None
 
-    def _draft(
-        self, trigger: OutreachTrigger
+    def draft(
+        self, trigger: OutreachTrigger, *, actor: str, as_of: datetime
     ) -> tuple[OutreachMessage | None, bool, tuple[str, ...]]:
-        """Ask the drafter, validate, and fall back to the deterministic body on any failure.
+        """Ask the drafter, screened both ways, validate, and fall back on any failure.
 
         Returns ``(message, discarded, reasons)``. ``discarded`` True means a human must look at
         it before anything is sent, whatever the fallback body says.
+
+        INPUT (rule R1), before any model is called: the prompt the drafter sends, rendered from
+        the closed brief. It carries every caller-influenced value that reaches a model (each
+        fact value, the locale, the channel, the template id), so screening it whole is what
+        catches an injection split across fields. The drafter receives the screened prompt
+        exactly as the screen returned it.
+
+        OUTPUT: the drafter's raw text, before :func:`.drafting.validate_draft` reads it. The
+        validator vets figures, required facts, banned phrases and personal data, and says
+        nothing about an injected or unsafe body, so the screen comes first and the screened
+        text is what the validator judges.
+
+        A refusal in either direction is audited ``Decision.BLOCKED`` first and then treated as
+        a discarded draft: the deterministic body, for a human, nothing delivered.
         """
         request = drafting_rules.draft_request_for(trigger, policy=self.policy)
         deterministic = drafting_rules.render_template(request, policy=self.policy)
+
+        prompt = self._screen(
+            drafting_rules.drafting_prompt(request), Direction.INPUT, trigger, actor, as_of
+        )
+        if prompt is None:
+            return deterministic, True, (f"{REASON_GUARDRAIL_BLOCKED}:{Direction.INPUT.value}",)
         try:
-            raw = self._drafting.draft(request)
+            raw = self._drafting.draft(request, prompt=prompt)
         except DraftingUnavailableError as exc:
             return deterministic, True, (f"drafter_unavailable:{exc}",)
-        verdict = drafting_rules.validate_draft(raw, request, policy=self.policy)
+
+        screened = self._screen(raw, Direction.OUTPUT, trigger, actor, as_of)
+        if screened is None:
+            return deterministic, True, (f"{REASON_GUARDRAIL_BLOCKED}:{Direction.OUTPUT.value}",)
+        verdict = drafting_rules.validate_draft(screened, request, policy=self.policy)
         if verdict.message is None:
             return deterministic, True, verdict.reasons
         return verdict.message, False, verdict.reasons
+
+    def _screen(
+        self,
+        text: str,
+        direction: Direction,
+        trigger: OutreachTrigger,
+        actor: str,
+        as_of: datetime,
+    ) -> str | None:
+        """Screen one text in one direction: the text to use from here on, or ``None``.
+
+        The returned text is the verdict's ``sanitized_text`` exactly as given, including an
+        empty string. ``None`` means refused: a block, or a guardrail that raised instead of
+        deciding (fail closed). Either way the refusal is audited BLOCKED first. An audit write
+        that itself fails propagates: the WORM trail is mandatory, the draft is not.
+        """
+        try:
+            verdict = self._guardrail.screen(text, direction)
+        except Exception as exc:  # noqa: BLE001 - an undecided screen is a refusal, not a pass
+            self._audit_guardrail_block(
+                trigger, actor, as_of, direction, f"guardrail unavailable ({type(exc).__name__})"
+            )
+            return None
+        if not verdict.allowed or verdict.sanitized_text is None:
+            self._audit_guardrail_block(
+                trigger, actor, as_of, direction, verdict.reason or "blocked by guardrail"
+            )
+            return None
+        return verdict.sanitized_text
+
+    def _audit_guardrail_block(
+        self,
+        trigger: OutreachTrigger,
+        actor: str,
+        as_of: datetime,
+        direction: Direction,
+        reason: str,
+    ) -> None:
+        """Audit a guardrail refusal on the drafting call (rules R1 and R2).
+
+        Never carries the refused text: only that a refusal happened, for which event, in which
+        direction, and why. A refused attempt is a security-relevant event the WORM trail must
+        hold even though the outreach decision proceeds on the deterministic body.
+        """
+        self._audit.record(
+            AuditEvent(
+                action="outreach_draft_screen",
+                actor=actor,
+                decision=Decision.BLOCKED,
+                severity=trigger.severity,
+                redacted_summary=redact(
+                    f"outreach:{trigger.event_type.value}:{trigger.event_id} :: draft blocked "
+                    f"({direction.value}): {reason}",
+                    PII_PATTERNS,
+                ),
+                citations=(),
+                timestamp=as_of,
+            )
+        )
 
     def _deliver(
         self,

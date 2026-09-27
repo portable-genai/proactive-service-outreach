@@ -32,6 +32,11 @@ locals {
   # Service account (iam.tf).
   app_sa_id = "${var.name_prefix}-app"
 
+  # The Model Armor template (model_armor.tf, rule R1). The default prefix gives
+  # "outreach-guardrail", which is config/settings.yaml's model_armor.template_id default; the
+  # serving edge also passes it as OUTREACH_MODEL_ARMOR_TEMPLATE, so another prefix is named too.
+  model_armor_template_id = "${var.name_prefix}-guardrail"
+
   # Storage (storage.tf). Project-qualified, because bucket names are globally unique.
   speech_bucket_name = "${var.project_id}-${var.name_prefix}-speech"
 

@@ -300,6 +300,7 @@ def _service(container: Container) -> OutreachService:
         delivery=container.delivery,
         speech=container.speech,
         tracer=container.tracer,
+        guardrail=container.guardrail,
         events=container.events,
         policy=container.settings.policy,
     )
