@@ -286,6 +286,26 @@ variable "review_routing_enabled" {
   default     = true
 }
 
+variable "guardrail_enabled" {
+  description = "Switch the guardrail that screens the drafting call (OUTREACH_GUARDRAIL, rule R1). A cheap runtime control: on in the reference, reversible, so it takes a default."
+  type        = bool
+  default     = true
+}
+
+variable "model_armor_full_capabilities" {
+  type        = bool
+  default     = true
+  description = <<-EOT
+    Whether the guardrail template (model_armor.tf) asks for the capabilities that are not
+    served in every region: the malicious-URI filter and multi-language detection.
+
+    True by default, because a deployment should get the whole guardrail unless it has a
+    reason not to. Some regions serve neither, and Model Armor does not degrade -- it refuses
+    the whole template with CAPABILITY_NOT_SUPPORTED, so a deployment in such a region must
+    set this false explicitly and disclose the narrowed guardrail rather than fail every apply.
+  EOT
+}
+
 variable "consent_store_url" {
   description = <<-EOT
     The marketing-compliance-gate consent and preference store this service ASKS on every contact
@@ -448,6 +468,9 @@ variable "additional_secret_env" {
         "OUTREACH_TENANT",
         "OUTREACH_QUALITY_URL",
         "OUTREACH_REVIEW_ROUTING",
+        "OUTREACH_GUARDRAIL",
+        "OUTREACH_MODEL_ARMOR_TEMPLATE",
+        "OUTREACH_MODEL_ARMOR_HOST",
         "GOOGLE_CLOUD_PROJECT",
         "GCP_REGION",
         "HUMAN_REVIEW_URL",

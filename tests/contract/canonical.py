@@ -38,6 +38,7 @@ from proactive_outreach.domain.kernel import (
     AuditEvent,
     Citation,
     Decision,
+    Direction,
     Severity,
 )
 from proactive_outreach.domain.models import (
@@ -220,18 +221,32 @@ def _consent_answered(adapter: Any, result: Any) -> bool:
 
 
 def _drafting_invoke(adapter: Any) -> Any:
+    from proactive_outreach.domain.drafting import drafting_prompt
     from proactive_outreach.domain.models import DraftRequest
 
-    return adapter.draft(
-        DraftRequest(
-            template_id="delivery_exception_reschedule",
-            locale="en-AU",
-            channel="chat",
-            facts=dict(CANONICAL_DRAFT_REQUEST_FACTS),
-            max_chars=320,
-            required_facts=tuple(sorted(CANONICAL_DRAFT_REQUEST_FACTS)),
-        )
+    request = DraftRequest(
+        template_id="delivery_exception_reschedule",
+        locale="en-AU",
+        channel="chat",
+        facts=dict(CANONICAL_DRAFT_REQUEST_FACTS),
+        max_chars=320,
+        required_facts=tuple(sorted(CANONICAL_DRAFT_REQUEST_FACTS)),
     )
+    return adapter.draft(request, prompt=drafting_prompt(request))
+
+
+#: Benign canonical text: it must not match the local heuristic's injection/jailbreak patterns,
+#: so the offline family's "answers" claim is proved on the same request every family gets.
+_CANONICAL_SCREEN_TEXT = "Delivery TRK-77120 could not be completed; next attempt 2026-08-12."
+
+
+def _guardrail_invoke(adapter: Any) -> Any:
+    return adapter.screen(_CANONICAL_SCREEN_TEXT, Direction.INPUT)
+
+
+def _guardrail_answered(_adapter: Any, result: Any) -> bool:
+    allowed = bool(getattr(result, "allowed", False))
+    return allowed and result.sanitized_text == _CANONICAL_SCREEN_TEXT
 
 
 def _drafting_answered(_adapter: Any, result: Any) -> bool:
@@ -309,6 +324,13 @@ CANONICAL_CALLS: dict[str, PortCase] = {
         answered=_events_answered,
         managed_refusal=(EventSourceUnavailableError,),
         detail="detect typed events in a stable order",
+    ),
+    "guardrail": PortCase(
+        invoke=_guardrail_invoke,
+        answered=_guardrail_answered,
+        # The lazy `google.cloud.modelarmor_v1` import is the first thing the managed adapter does.
+        managed_refusal=(ImportError,),
+        detail="screen one canonical prompt and allow it unchanged",
     ),
     "identity": PortCase(
         invoke=_identity_invoke,

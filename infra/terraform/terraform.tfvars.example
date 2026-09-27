@@ -88,6 +88,16 @@ production_edge_enabled = false
 # Cheap runtime control, on in the reference; false runs without routing and needs no console.
 review_routing_enabled = true
 
+# Rule R1: the guardrail that screens the drafting call's prompt and answer. On in the
+# reference; false runs the drafter unscreened, which the service logs at startup.
+guardrail_enabled = true
+
+# The guardrail template's regional capabilities (model_armor.tf). asia-southeast1 does not
+# serve the malicious-URI filter or multi-language detection and refuses the WHOLE template
+# with CAPABILITY_NOT_SUPPORTED, so a deployment there states false and discloses the narrowed
+# guardrail; a region that serves both leaves it true.
+model_armor_full_capabilities = false
+
 # Optional runtime wiring. Leave a variable out entirely rather than setting it to an
 # empty string: this service reads its environment in three states, and an emptied
 # value is a deliberate refusal rather than an inherited default.

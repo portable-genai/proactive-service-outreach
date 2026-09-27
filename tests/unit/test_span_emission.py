@@ -69,6 +69,7 @@ def _service(tracer: _RecordingTracer) -> OutreachService:
         delivery=container.delivery,
         speech=container.speech,
         tracer=tracer,  # type: ignore[arg-type]
+        guardrail=container.guardrail,
         events=container.events,
         policy=container.settings.policy,
     )

@@ -33,6 +33,10 @@ deployment accordingly: see the exposure section of [runbook.md](runbook.md).
    - `EventDetectionPort` -> the client's own operational event feed. The placeholder refuses
      rather than returning an empty tuple, because a sweep reporting no events is
      indistinguishable from a quiet morning and nobody investigates a quiet morning.
+   - `GuardrailPort` -> the client's own prompt and response screening. Rule R1 does not relax on
+     exit: the placeholder RAISES, which the domain treats as a refusal (audited, then the
+     deterministic body goes to a human), so an unported guardrail stops every draft rather than
+     letting one through unscreened.
    - `DraftingPort` -> the client's own model endpoint. This is the one port whose absence is
      survivable: a refusal is treated as a discarded draft, so the deterministic template body
      goes to a human and a notification is delayed rather than lost.

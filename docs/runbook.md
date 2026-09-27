@@ -225,6 +225,27 @@ empty `review_ref`. A hand-off that fails at request time does not fail the requ
 carries `review_routing: "failed"` and an empty reference, the failure is logged, and the console
 says the item is not queued for review. Terraform states the switch as `review_routing_enabled`.
 
+## Guardrail (rule R1)
+The drafting call is screened in both directions: the whole prompt before any model is called, and
+the model's raw answer before the validator reads it. Under the managed profile the screen is the
+regional Model Armor template `infra/terraform/model_armor.tf` creates, named by
+`OUTREACH_MODEL_ARMOR_TEMPLATE` on the regional host `OUTREACH_MODEL_ARMOR_HOST` (the serving edge
+sets both from the stack); each call carries `model_armor.timeout_seconds` (10 s) as its deadline.
+Only a complete, clean screen allows: a match, a screen where some filter was skipped (text past a
+filter's token limit, an unsupported language), an empty result, an API error or the deadline all
+refuse. A refusal is written to the audit log as its own `decision="blocked"` entry, naming the
+direction and the reason but never the refused text; the notification then takes the discarded-draft
+path (deterministic body, human review, nothing delivered), so an outage costs a reviewer's time
+and never a notification. A `blocked` entry whose summary says `guardrail unavailable` is Model
+Armor unreachable, not an attack.
+
+`OUTREACH_GUARDRAIL` switches it, read in the same three states as review routing. Off binds a
+guardrail that allows everything, logs one warning at startup, and should be a recorded decision.
+With it on under the managed profile and no template named, the service refuses to boot. Terraform
+states the switch as `guardrail_enabled`, and `model_armor_full_capabilities` declines the
+malicious-URI filter and multi-language detection where the region does not serve them
+(`asia-southeast1` does not, so the example states false and the narrowed guardrail is disclosed).
+
 ## Supply chain
 Installs come from the committed lockfiles. After changing a dependency run `make lock` and commit
 both files, then `make audit` (`pip-audit` over both locks). CI runs the same audit as a hard
@@ -278,7 +299,7 @@ key creation (org policy should have refused it, so this firing means the policy
 VPC-SC violation, a CMEK key destroy or update, a Cloud Armor denial at the edge, and a
 critical-severity escalation in this service's audit log.
 
-Three are this vertical's own, and they exist because the interesting failure of an outbound
+Four are this vertical's own, and they exist because the interesting failure of an outbound
 service is SILENCE rather than an error:
 
 | Alert | Fires on | Why it is not noise |
@@ -286,6 +307,7 @@ service is SILENCE rather than an error:
 | `consent_unavailable` | a refusal carrying `consent_unknown` | the eligibility engine returns it when the `marketing-compliance-gate` store gave no usable answer. Refusing is correct; it is also exactly what a total store outage looks like, and while it lasts this service contacts nobody while every request still answers 200 |
 | `policy_gap_refusals` | a refusal carrying `frequency_cap_unconfigured` or `quiet_hours_unconfigured` | an unconfigured cap or market DENIES by design, so a policy gap presents as customers not being told things. This is the alert that tells the policy owner they have a hole rather than a quiet quarter |
 | `draft_discarded` | the validator refused what the model wrote | one is a working control; a rate of them is a model or prompt regression, and each costs a human a review |
+| `guardrail_blocks` | an audit entry with `decision="blocked"`: the guardrail refused the drafting prompt or answer, or could not decide | one is the control working; a burst is an injection campaign arriving through event attributes, and a steady rate reading `guardrail unavailable` is Model Armor down while every draft goes to a human |
 
 Attach a channel through `alert_notification_channels`; the serving edge refuses to plan
 without one, because an alert nobody receives is not an alert.
@@ -294,7 +316,3 @@ There is deliberately NO alert on `frequency_cap_exceeded`. A cap that refuses a
 in a day is the product working exactly as specified, many times a day, and an alert on the
 intended outcome trains an operator to ignore the channel. The cap arithmetic is proved by
 `frequency_cap_exactness >= 1.0` in the eval, which is where an arithmetic claim belongs.
-
-There is likewise no guardrail-block alert: this service binds no guardrail port yet (see the
-R1 row in `COMPLIANCE.md`), and a metric whose filter can never match reads as a green light
-nobody earned. Add it in the same commit that binds the guardrail.

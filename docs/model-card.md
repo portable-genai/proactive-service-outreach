@@ -26,10 +26,17 @@ is a bounded, replaceable component that phrases a notification which has alread
   source-system detail with `pii_kit.redact` against this deployment's jurisdiction pattern
   pack before the audit write and before any outbound payload, so a raw identifier never reaches
   a WORM record or the `human-review-console`.
-- **The prompt is a closed fact set.** `adapters/gcp/drafting.py` sends a template id, a locale,
-  a channel and the facts the trigger engine assembled. Not the event, not the free-text detail,
-  not the subject id, not the consent decision. The instruction itself is a module constant, so
-  what the model is told is reviewable in a diff and no per-request value can enter it.
+- **The prompt is a closed fact set.** `domain/drafting.drafting_prompt` renders a template id,
+  a locale, a channel and the facts the trigger engine assembled, and `adapters/gcp/drafting.py`
+  sends that string and nothing else. Not the event, not the free-text detail, not the subject id,
+  not the consent decision. The instruction itself is a module constant, so what the model is told
+  is reviewable in a diff and no per-request value can enter it.
+- **Both directions are screened (rule R1).** Event attributes reach the prompt as facts, so the
+  whole rendered prompt is screened by the guardrail (`ports/guardrail.py`; Model Armor under
+  `gcp`) before any model is called, and the drafter is handed the screened text exactly as
+  returned. The model's raw answer is screened again before the validator reads it. A refusal in
+  either direction, or a guardrail that cannot decide, is audited `blocked` and fails closed to the
+  template body for a human; `tests/unit/test_guardrail_screening.py` proves each path.
 - **Every draft is untrusted, and a bad one is discarded rather than repaired.**
   `domain/drafting.validate_draft` rejects output that is not a JSON object, output with no
   usable `body`, a body over the policy length limit, any digit run the facts did not supply, a
@@ -71,9 +78,6 @@ facts the generator chose would be a tautology.
 - **Evaluation of the live model.** The offline eval scores the validator and the deterministic
   pipeline. Add a managed-profile run through the `model-quality-gate` promotion gate that scores real drafted
   bodies for groundedness, locale fidelity and banned-phrase rate against the same golden cases.
-- **Prompt-injection screening.** Event attributes reach the prompt as facts. Screen them through
-  the `agent-guardrail-gateway` before generation, failing closed to the template body when the
-  screen is unavailable. That port is not bound in this repo today.
 - **Voice consent and retention.** Synthesised audio persists in a bucket. Record who may listen
   to it, for how long it is kept, and how a subject-access request reaches it.
 

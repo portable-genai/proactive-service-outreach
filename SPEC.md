@@ -80,6 +80,12 @@ place (`domain/outreach_service.py`) and every surface goes through it.
   permitted, the cap arithmetic, the severity band, whether a human must approve) is pure stdlib
   and replayable. An LLM phrases a message that has already been decided; it produces no number
   and no verdict.
+- **Guardrail (R1)**: the drafting call is screened in both directions through `GuardrailPort`
+  (Model Armor under the managed profile): the whole rendered prompt before any model is called,
+  handed to the drafter exactly as screened, and the model's raw answer before the validator reads
+  it. A refusal, or a guardrail that cannot decide, is audited `blocked` and the draft is
+  discarded: deterministic body, human review, nothing delivered. `OUTREACH_GUARDRAIL` switches it
+  in three states; on under the managed profile with no template named refuses at boot.
 - **Maker-checker (P-06) and routing (R8)**: an event type marked `consequential` in policy
   (`fraud_hold` and `outage` in the shipped set) sets `requires_human_review=True`, is NOT
   delivered, and is routed through `ReviewRouterPort` to the `human-review-console` in the same request,

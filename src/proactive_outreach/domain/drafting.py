@@ -1,7 +1,9 @@
-"""Drafting: the deterministic body, and the schema that judges whatever a model writes.
+"""Drafting: the deterministic body, the prompt a model reads, and the schema that judges it.
 
-Two functions and one rule. :func:`render_template` produces the body from configured template
+Three functions and one rule. :func:`render_template` produces the body from configured template
 text and the closed fact set, in pure code, with no model anywhere near it.
+:func:`drafting_prompt` renders the closed brief into the one string a model is sent, so the
+guardrail's INPUT screen reads exactly what the model reads (rule R1).
 :func:`validate_draft` takes what a model returned and decides whether it may be used at all.
 
 The rule is that the model may PHRASE and may not INFORM. Everything a customer is told (the
@@ -57,6 +59,14 @@ _DIGIT_RUN = re.compile(r"\d+")
 
 #: Placeholders a template may carry. Anything else in the template text is literal.
 _PLACEHOLDER = re.compile(r"\{([a-z0-9_]+)\}")
+
+#: The instruction. It is a constant rather than a built string so that what the model is told
+#: is reviewable in a diff, and so no per-request value can enter the instruction itself.
+DRAFTING_INSTRUCTION = (
+    "Rewrite the service notification below in the requested locale. Use ONLY the facts "
+    "provided. Do not add figures, dates, amounts, references or promises of any kind. Return "
+    'a JSON object of the form {"body": "..."} and nothing else.'
+)
 
 
 class DraftVerdict:
@@ -115,6 +125,24 @@ def render_template(request: DraftRequest, *, policy: OutreachPolicy) -> Outreac
                 snippet=template,
             ),
         ),
+    )
+
+
+def drafting_prompt(request: DraftRequest) -> str:
+    """The prompt a model-backed drafter sends: the instruction and every field of the brief.
+
+    This is the string the guardrail's INPUT screen reads whole (rule R1), and the drafter is
+    handed the SCREENED result rather than rebuilding it, so what was screened is what the model
+    reads. It carries every value a caller can influence that reaches a model (the locale, the
+    channel, the template id and each fact value, all of which come from the detected event or
+    the policy), in a stable order so the same brief always renders the same prompt. The subject
+    id and the source system's free-text detail are not in it, because no model is sent either.
+    """
+    facts = "\n".join(f"- {name}: {value}" for name, value in sorted(request.facts.items()))
+    return (
+        f"{DRAFTING_INSTRUCTION}\n\nlocale: {request.locale}\nchannel: {request.channel}\n"
+        f"template: {request.template_id}\nmax_characters: {request.max_chars}\n"
+        f"facts:\n{facts}\n"
     )
 
 
@@ -195,8 +223,10 @@ __all__ = [
     "REASON_PERSONAL_DATA",
     "REASON_TOO_LONG",
     "REASON_UNGROUNDED",
+    "DRAFTING_INSTRUCTION",
     "DraftVerdict",
     "draft_request_for",
+    "drafting_prompt",
     "render_template",
     "validate_draft",
 ]

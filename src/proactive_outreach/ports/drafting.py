@@ -13,7 +13,13 @@ Two properties hold for every implementation of this port:
   a contact that may not be made, so a refused contact costs no tokens and leaks no facts to a
   model; and
 * whatever it returns is untrusted. There is no implementation whose output is taken on faith,
-  including the offline one.
+  including the offline one; and
+* ``prompt`` is the domain's rendering of the closed brief
+  (:func:`~..domain.drafting.drafting_prompt`) AFTER the guardrail's INPUT screen (rule R1),
+  exactly as the screen returned it. A model-backed implementation sends that string and
+  nothing else, and never rebuilds a prompt of its own, so the text a model reads is the text
+  that was screened. The drafter's answer is screened again on the way out before the domain
+  validates it.
 """
 
 from __future__ import annotations
@@ -33,6 +39,9 @@ class DraftingUnavailableError(RuntimeError):
 
 @runtime_checkable
 class DraftingPort(Protocol):
-    def draft(self, request: DraftRequest) -> str:
-        """Return raw candidate text (expected to be a JSON object with a ``body`` string)."""
+    def draft(self, request: DraftRequest, *, prompt: str) -> str:
+        """Return raw candidate text (expected to be a JSON object with a ``body`` string).
+
+        ``prompt`` is the screened rendering of ``request``; see the module docstring.
+        """
         ...

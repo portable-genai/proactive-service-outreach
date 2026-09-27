@@ -37,6 +37,7 @@ locals {
   # model, which rephrases a body that has already been decided and produces no number.
   app_roles = [
     "roles/aiplatform.user",              # drafting.py
+    "roles/modelarmor.user",              # guardrail.py: sanitizeUserPrompt/sanitizeModelResponse
     "roles/dialogflow.client",            # delivery.py (detect_intent, not agent design)
     "roles/bigquery.jobUser",             # events.py (run the query job in this project)
     "roles/logging.logWriter",            # audit.py (write only: it cannot read the WORM trail)

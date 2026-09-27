@@ -18,7 +18,7 @@ class OnPremDraftingAdapter:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
 
-    def draft(self, request: DraftRequest) -> str:
+    def draft(self, request: DraftRequest, *, prompt: str) -> str:
         raise NotImplementedError(
             "on-prem drafting is a portability placeholder: bind the client's own model "
             "endpoint (see docs/onprem-migration.md). The deterministic template body is "

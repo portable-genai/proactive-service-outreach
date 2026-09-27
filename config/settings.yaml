@@ -44,6 +44,19 @@ iap_audience: ${OUTREACH_IAP_AUDIENCE:-}
 # deliberately distinct from this service's own inbound OUTREACH_S2S_TOKEN.
 review_url: ${HUMAN_REVIEW_URL:-}
 
+# Rule R1: the Model Armor template the `gcp` guardrail adapter screens the drafting call's
+# prompt and response through, and the regional host it calls (never the global endpoint, P-05).
+# `template_id` matches the template `infra/terraform/model_armor.tf` creates under the default
+# name_prefix, so a zero-edit boot names a template its own Terraform provisions; the serving
+# edge sets both variables below from the stack itself, so another prefix or region is named too. Guardrail on (OUTREACH_GUARDRAIL, unset
+# means on) under the managed profile REFUSES TO BOOT when template_id is empty and the bound
+# adapter is ModelArmorGuardrailAdapter; OUTREACH_GUARDRAIL=off states the guardrail off.
+model_armor:
+  template_id: ${OUTREACH_MODEL_ARMOR_TEMPLATE:-outreach-guardrail}
+  host: ${OUTREACH_MODEL_ARMOR_HOST:-modelarmor.asia-southeast1.rep.googleapis.com}
+  # The deadline on every sanitize call. A timeout fails CLOSED (audited, then refused).
+  timeout_seconds: 10.0
+
 # The consent and preference store this service ASKS (marketing-compliance-gate). There is deliberately no local
 # fallback: an unset value refuses under the managed profile rather than answering a legal
 # question about a person from a cache nobody governs. Credentials are CONSENT_S2S_TOKEN /
@@ -224,6 +237,12 @@ adapters:
     local: proactive_outreach.adapters.local.events:FixtureEventSource
     gcp: proactive_outreach.adapters.gcp.events:WarehouseEventSource
     onprem: proactive_outreach.adapters.onprem.events:OnPremEventSource
+  # Rule R1: screens the drafting call's prompt (before) and response (after). local is a
+  # deterministic heuristic stand-in; there is no offline emulator for Model Armor.
+  guardrail:
+    local: proactive_outreach.adapters.local.guardrail:LocalHeuristicGuardrailAdapter
+    gcp: proactive_outreach.adapters.gcp.guardrail:ModelArmorGuardrailAdapter
+    onprem: proactive_outreach.adapters.onprem.guardrail:OnPremGuardrailAdapter
   identity:
     local: proactive_outreach.adapters.local.identity:LocalIdentityAdapter
     gcp: proactive_outreach.adapters.gcp.identity:IapIdentityAdapter

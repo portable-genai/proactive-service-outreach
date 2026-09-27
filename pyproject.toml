@@ -69,6 +69,8 @@ gcp = [
   "google-cloud-storage>=3.0",
   "google-cloud-texttospeech>=2.0",
   "google-genai>=2.0",
+  # adapters/gcp/guardrail.py: Model Armor screens the drafting call both ways (rule R1).
+  "google-cloud-modelarmor>=0.7",
 ]
 
 [project.scripts]

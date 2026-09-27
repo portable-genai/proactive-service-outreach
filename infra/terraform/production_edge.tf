@@ -158,6 +158,23 @@ resource "google_cloud_run_v2_service" "api" {
         name  = "OUTREACH_REVIEW_ROUTING"
         value = tostring(var.review_routing_enabled)
       }
+      # The guardrail switch (rule R1), stated the same way: on in the reference, and off is a
+      # logged deployment choice rather than a silent one.
+      env {
+        name  = "OUTREACH_GUARDRAIL"
+        value = tostring(var.guardrail_enabled)
+      }
+      # The template this stack created and the regional host of the region it is in, stated
+      # from the stack rather than inherited from the settings file's defaults, so a non-default
+      # prefix or region screens against the template that actually exists (P-05).
+      env {
+        name  = "OUTREACH_MODEL_ARMOR_TEMPLATE"
+        value = google_model_armor_template.guardrail.template_id
+      }
+      env {
+        name  = "OUTREACH_MODEL_ARMOR_HOST"
+        value = "modelarmor.${var.region}.rep.googleapis.com"
+      }
       # P-13: the consent authority. Also required, because there is no second copy of anybody's
       # consent anywhere in this service and an unnamed store refuses every contact.
       env {

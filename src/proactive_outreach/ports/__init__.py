@@ -5,7 +5,7 @@ Every port is a ``@runtime_checkable`` Protocol and every port has a binding in 
 equality across all five places a port is registered, so a port added here without a binding
 fails the build.
 
-Two of the eight are not declared in this package at all, and that is the point:
+Two of the ports are not declared in this package at all, and that is the point:
 
 * ``IdentityPort`` comes from ``hex-service-kit``. What an identity adapter DECLARES about the
   authentication it provides is this service's own vocabulary, not the commons', and lives in
@@ -29,6 +29,7 @@ from .consent import ConsentPort, ConsentUnavailableError
 from .delivery import DeliveryRefusedError, MessageDeliveryPort
 from .drafting import DraftingPort, DraftingUnavailableError
 from .events import EventDetectionPort, EventSourceUnavailableError
+from .guardrail import GuardrailPort
 from .identity import (
     CLIENT_ASSERTED,
     END_USER_AUTH_ATTR,
@@ -53,6 +54,7 @@ PORT_PROTOCOLS: dict[str, type] = {
     "delivery": MessageDeliveryPort,
     "drafting": DraftingPort,
     "events": EventDetectionPort,
+    "guardrail": GuardrailPort,
     "identity": IdentityPort,
     "review_router": ReviewRouterPort,
     "speech": TextToSpeechPort,
@@ -79,6 +81,7 @@ __all__ = [
     "EndUserAuthUnavailableError",
     "EventDetectionPort",
     "EventSourceUnavailableError",
+    "GuardrailPort",
     "IdentityPort",
     "MessageDeliveryPort",
     "ReviewRouterPort",

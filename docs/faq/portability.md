@@ -3,7 +3,7 @@
 ## How do we leave?
 
 Every boundary is a `typing.Protocol` with three adapter families, selected by one environment
-variable. `make portability` runs the executable claim: eight ports across three profiles, all
+variable. `make portability` runs the executable claim: every declared port across three profiles, all
 bound and conforming, the offline family answering, the exit family refusing loudly, the audit
 trail exported to JSON Lines and reloaded elsewhere with its hash chain intact, and no cloud SDK
 imported anywhere in the run. It prints a pass or fail per named check.
