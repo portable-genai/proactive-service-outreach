@@ -105,7 +105,7 @@ model_armor_full_capabilities = false
 #   chat_agent          empty means no channel, and delivery refuses
 #   speech_voice        empty means no voice, and synthesis refuses
 #   quality_service_url the model-quality-gate promotion authority; emptied names no authority at all
-#   otlp_endpoint       the agent-observability collector; unset exports straight to Cloud Trace
+#   otlp_endpoint       the agent-observability collector; unset, the gcp tracer refuses to build
 # drafting_model      = "gemini-3.5-flash"
 # chat_agent          = "projects/fictional-outreach-sg/locations/asia-southeast1/agents/00000000-0000-0000-0000-000000000000"
 # speech_voice        = "en-SG-Standard-A"

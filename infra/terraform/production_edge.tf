@@ -65,7 +65,7 @@ locals {
   #   OUTREACH_CHAT_AGENT        emptied means no channel, and delivery refuses
   #   OUTREACH_SPEECH_VOICE      emptied means no voice, and synthesis refuses
   #   OUTREACH_TENANT            emptied asserts no tenant on an outbound review
-  #   OTEL_EXPORTER_OTLP_ENDPOINT unset exports straight to Cloud Trace, which is valid
+  #   OTEL_EXPORTER_OTLP_ENDPOINT unset or emptied names no collector, and the tracer refuses
   # One map rather than eight near-identical dynamic blocks, so the RULE lives in one place and
   # a new variable cannot be added under a slightly different rule by accident.
   optional_env = {
