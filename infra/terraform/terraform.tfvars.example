@@ -27,10 +27,8 @@ allowed_regions = ["asia-southeast1"]
 
 # ----------------------------------------------------------------------------- #
 # POSTURE A: quick evaluation (project-scoped, no org roles, fully destroyable).
-# NOT a compliant production deployment. Uncomment the three lines together.
+# NOT a compliant production deployment. Uncomment the line below.
 # ----------------------------------------------------------------------------- #
-# enable_org_policies = false
-# enable_vpc_sc       = false
 # worm_locked         = false
 
 # ----------------------------------------------------------------------------- #
@@ -136,3 +134,9 @@ model_armor_full_capabilities = false
 #   CONSENT_S2S_TOKEN      = { secret_id = "mkt6-consent-s2s", version = "2" }
 #   CONSENT_S2S_SIGNING_KEY = { secret_id = "mkt6-actor-signing", version = "1" }
 # }
+
+# Slice 7 (2026-10-01): the perimeter and the org policies default OFF in code, so a
+# production deployment states them. A shared project states false in every stack but
+# the one that owns them.
+enable_vpc_sc = true
+enable_org_policies = true
